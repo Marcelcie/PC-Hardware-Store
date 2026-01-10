@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <title>Moje Konto</title>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a>
+        </div>
+        <div class="user-actions">
+            <a href="koszyk.html"><i class="fa-solid fa-basket-shopping"></i></a>
+            <a href="/logout" title="Wyloguj"><i class="fa-solid fa-power-off" style="color: red;"></i></a>
+        </div>
+    </header>
+
+    <div class="layout-container">
+        <main class="account-container">
+            <aside class="account-sidebar">
+                <div class="user-welcome">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <div>
+                        Witaj, <strong>{{ user.imie }} {{ user.nazwisko }}</strong>
+                        <p class="user-id">ID Klienta: #{{ user.id_klienta }}</p>
+                        <p style="font-size: 12px;">{{ user.adres_email }}</p>
+                    </div>
+                </div>
+                <nav class="account-nav">
+                    <a href="#" class="active">Moje zamówienia</a>
+                    <a href="/logout" class="logout">Wyloguj się</a>
+                </nav>
+            </aside>
+
+            <section class="account-content">
+                <h1>Moje zamówienia</h1>
+                
+                {% if orders %}
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Numer</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th>Suma</th>
+                            <th>Akcja</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><strong>{{ order.numer_zamowienia }}</strong></td>
+                            <td>{{ order.data_zlozenia.strftime('%d.%m.%Y') }}</td>
+                            <td>
+                                {% if order.status_zamowienia == 'Dostarczone' %}
+                                    <span class="status delivered">{{ order.status_zamowienia }}</span>
+                                {% else %}
+                                    <span class="status shipped">{{ order.status_zamowienia }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ order.suma_calkowita }} zł</td>
+                            <td><a href="#" class="details-link">Szczegóły</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <p>Nie złożyłeś jeszcze żadnych zamówień.</p>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>

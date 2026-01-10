@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twój Koszyk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+     <header>
+        <div class="logo">
+            <a href="/" class="logo-link">
+                <i class="fa-solid fa-shop"></i>
+            </a>
+        </div>
+        <div class="user-actions">
+            {% if user %}
+                <a href="konto.html" title="Konto"><i class="fa-solid fa-user-check" style="color: green;"></i></a>
+            {% else %}
+                <a href="login.html" title="Zaloguj"><i class="fa-solid fa-user"></i></a>
+            {% endif %}
+            <a href="koszyk.html" class="cart-link">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span class="cart-count">0</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="layout-container">
+    <main class="cart-page">
+        <h1>Twój koszyk</h1>
+        
+        <div id="empty-cart-msg" style="display: none; text-align: center; padding: 100px 20px;">
+            <i class="fa-solid fa-cart-shopping" style="font-size: 80px; color: #ddd; margin-bottom: 20px;"></i>
+            <h2>Twój koszyk jest obecnie pusty</h2>
+            <a href="/" style="background-color: #007bff; color: white; padding: 12px 25px; border-radius: 6px; font-weight: bold;">Wróć do sklepu</a>
+        </div>
+
+        <div id="cart-content" class="cart-content">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Img</th> <th>Produkt</th> <th>Cena</th> <th>Ilość</th> <th>Suma</th> <th>Usuń</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+
+            <aside class="cart-summary">
+                <div class="summary-box">
+                    <h3>Podsumowanie</h3>
+                    <div class="summary-row">
+                        <span>Wartość:</span>
+                        <span class="summary-subtotal">0.00 zł</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Do zapłaty:</span>
+                        <span>0.00 zł</span>
+                    </div>
+                    <button class="checkout-btn">Złóż zamówienie</button>
+                    <a href="/" class="continue-shopping">Kontynuuj zakupy</a>
+                </div>
+            </aside>
+        </div>
+    </main>
+    </div>
+
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>
