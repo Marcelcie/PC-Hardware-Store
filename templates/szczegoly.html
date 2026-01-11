@@ -20,11 +20,26 @@
             <div class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></div>
         </div>
         <div class="user-actions">
-            <a href="konto.html"><i class="fa-solid fa-user"></i></a>
+            {% if user %}
+                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
+                    <i class="fa-solid fa-user-check" style="color: green;"></i>
+                </a>
+            {% else %}
+                <a href="login.html" title="Zaloguj się">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
+
             <a href="koszyk.html" class="cart-link">
                 <i class="fa-solid fa-basket-shopping"></i>
                 <span class="cart-count">0</span>
             </a>
+
+            {% if user %}
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% endif %}
         </div>
     </header>
 

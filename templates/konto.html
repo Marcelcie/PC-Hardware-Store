@@ -13,8 +13,26 @@
             <a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a>
         </div>
         <div class="user-actions">
-            <a href="koszyk.html"><i class="fa-solid fa-basket-shopping"></i></a>
-            <a href="/logout" title="Wyloguj"><i class="fa-solid fa-power-off" style="color: red;"></i></a>
+            {% if user %}
+                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
+                    <i class="fa-solid fa-user-check" style="color: green;"></i>
+                </a>
+            {% else %}
+                <a href="login.html" title="Zaloguj się">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
+
+            <a href="koszyk.html" class="cart-link">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span class="cart-count">0</span>
+            </a>
+
+            {% if user %}
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% endif %}
         </div>
     </header>
 
@@ -62,7 +80,9 @@
                                 {% endif %}
                             </td>
                             <td>{{ order.suma_calkowita }} zł</td>
-                            <td><a href="#" class="details-link">Szczegóły</a></td>
+<td>
+    <a href="/zamowienie/{{ order.id_zamowienia }}" class="details-link">Szczegóły</a>
+</td>
                         </tr>
                         {% endfor %}
                     </tbody>

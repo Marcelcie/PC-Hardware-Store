@@ -1173,6 +1173,23 @@ footer .footer-bottom {
   margin-bottom: 15px;
 }
 
+.select-sort {
+  margin-bottom: 15px;
+}
+
+.select-sort select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.select-sort label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
 .filter-group label {
   display: block;
   font-size: 14px;
@@ -1217,7 +1234,158 @@ footer .footer-bottom {
 .filter-select:focus {
   border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
-}/*# sourceMappingURL=style.css.map */
+}
+
+/* --- PODSUMOWANIE ZAMÓWIENIA (CHECKOUT) --- */
+.checkout-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.checkout-left {
+  flex: 2;
+}
+
+.checkout-right {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+/* Karta adresu domyślnego */
+.default-address-card {
+  background: #f9f9f9;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.default-address-card h3 {
+  margin-bottom: 10px;
+  color: #007bff;
+  font-size: 18px;
+}
+
+.default-address-card p {
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.address-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  background: #fff;
+  transition: 0.2s;
+}
+
+.btn-small:hover {
+  background: #eee;
+}
+
+.btn-small.delete {
+  color: red;
+  border-color: #ffcccc;
+}
+
+.btn-small.delete:hover {
+  background: #ffe6e6;
+}
+
+.separator-text {
+  text-align: center;
+  margin: 20px 0;
+  font-weight: bold;
+  color: #999;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.btn-toggle-form {
+  width: 100%;
+  padding: 10px;
+  background-color: #fff;
+  border: 2px dashed #aaa;
+  color: #555;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: 0.2s;
+}
+
+.btn-toggle-form:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background-color: #f0f8ff;
+}
+
+/* Mini koszyk po prawej */
+.mini-cart-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.mini-cart-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.mini-cart-info {
+  flex: 1;
+}
+
+.mini-cart-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.mini-cart-meta {
+  font-size: 12px;
+  color: #777;
+}
+
+.mini-cart-total {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 2px solid #333;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .checkout-layout {
+    flex-direction: column-reverse; /* Koszyk na górę lub dół w zależności od preferencji */
+  }
+  .checkout-right {
+    width: 100%;
+    position: static;
+  }
+}
 
 ====================
 PLIK: style.css.map
@@ -2480,69 +2648,231 @@ $breakpoint-mobile: 768px;
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
 }
 
+/* --- BUTTON RESETOWANIA FILTRÓW --- */
+.reset-container {
+  text-align: center;
+  margin-top: 10px;
+}
+
+#reset-filters {
+  color: #dc3545; /* Czerwony kolor */
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+#reset-filters:hover {
+  color: #a71d2a;
+  font-weight: bold;
+}
+
 ====================
 PLIK: script.js
 ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // --- ELEMENTY DOM ---
+    // --- ZMIENNE ---
     const cartCountElement = document.querySelector('.cart-count');
-    const passwordToggles = document.querySelectorAll('.toggle-password');
     const backToTopBtn = document.getElementById('back-to-top');
+    
+    // --- 1. ZARZĄDZANIE KOSZYKIEM (LOCAL STORAGE) ---
+    
+    // Pobierz koszyk z pamięci przeglądarki
+    function getCart() {
+        return JSON.parse(localStorage.getItem('myShopCart')) || [];
+    }
 
-    // --- 1. OBSŁUGA HASŁA (Oczko) ---
-    passwordToggles.forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            const input = this.parentElement.querySelector('input');
-            if (input) {
-                const isPassword = input.getAttribute('type') === 'password';
-                input.setAttribute('type', isPassword ? 'text' : 'password');
-                this.classList.toggle('fa-eye');
-                this.classList.toggle('fa-eye-slash');
-            }
+    // Zapisz koszyk do pamięci
+    function saveCart(cart) {
+        localStorage.setItem('myShopCart', JSON.stringify(cart));
+        updateBadge();
+    }
+
+    // Aktualizuj licznik w nagłówku
+    function updateBadge() {
+        const cart = getCart();
+        const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+        if (cartCountElement) cartCountElement.innerText = totalQty;
+    }
+
+    // Dodaj produkt
+    function addToCart(id, qty = 1) {
+        let cart = getCart();
+        const existingItem = cart.find(item => item.id === id);
+        
+        if (existingItem) {
+            existingItem.qty += qty;
+        } else {
+            cart.push({ id: id, qty: qty });
+        }
+        
+        saveCart(cart);
+        updateBadge();
+        window.showToast("Dodano produkt do koszyka!");
+    }
+
+    // --- 2. OBSŁUGA PRZYCISKÓW NA STRONIE (WSZYSTKICH) ---
+    
+    // Guziki "Dodaj do koszyka" na liście produktów (index.html)
+    document.querySelectorAll('.cart-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault(); // Żeby nie wchodziło w link szczegółów
+            // Szukamy ID w linku rodzica lub atrybucie
+            const card = btn.closest('.product-card');
+            const link = card.querySelector('.card-link').getAttribute('href'); // np. "szczegoly.html?id=5"
+            const id = parseInt(link.split('=')[1]);
+            
+            addToCart(id, 1);
         });
     });
 
-    // --- 2. FORMATOWANIE CENY ---
-    const formatPrice = (amount) => {
-        return amount.toLocaleString('pl-PL', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) + ' zł';
-    };
-
-    // --- 3. OBSŁUGA SZCZEGÓŁÓW PRODUKTU (szczegoly.html) ---
-    const productDetail = document.querySelector('.product-detail');
-    if (productDetail) {
-        const qtyInput = productDetail.querySelector('.qty-input');
-        const btnPlus = productDetail.querySelector('.qty-plus');
-        const btnMinus = productDetail.querySelector('.qty-minus');
-        const btnAddToCart = productDetail.querySelector('.add-to-cart-big');
-
-        btnPlus?.addEventListener('click', () => {
-            qtyInput.value = parseInt(qtyInput.value) + 1;
-        });
-
-        btnMinus?.addEventListener('click', () => {
-            if (parseInt(qtyInput.value) > 1) {
-                qtyInput.value = parseInt(qtyInput.value) - 1;
-            }
-        });
-
-        btnAddToCart?.addEventListener('click', () => {
-            const title = productDetail.querySelector('h1').innerText;
-            const addedQty = parseInt(qtyInput.value);
+    // Guzik "Dodaj do koszyka" na stronie szczegółów (szczegoly.html)
+    const btnAddBig = document.querySelector('.add-to-cart-big');
+    if (btnAddBig) {
+        btnAddBig.addEventListener('click', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = parseInt(urlParams.get('id'));
+            const qtyInput = document.querySelector('.qty-input');
+            const qty = parseInt(qtyInput.value) || 1;
             
-            // Prosta symulacja licznika (tylko wizualna, bez zapisu do bazy na razie)
-            let currentCount = parseInt(localStorage.getItem('cartBadgeCount')) || 0;
-            currentCount += addedQty;
-            localStorage.setItem('cartBadgeCount', currentCount);
-            if (cartCountElement) cartCountElement.innerText = currentCount;
-
-            window.showToast(`Dodano do koszyka: ${title} (${addedQty} szt.)`);
+            addToCart(id, qty);
         });
     }
 
-    // --- 4. TOASTY (Powiadomienia) ---
+    // --- 3. LOGIKA STRONY KOSZYKA (koszyk.html) ---
+    const cartTableBody = document.querySelector('.cart-table tbody');
+    if (cartTableBody) {
+        renderCartPage();
+    }
+
+    async function renderCartPage() {
+        const cart = getCart();
+        const emptyMsg = document.getElementById('empty-cart-msg');
+        const cartContent = document.getElementById('cart-content');
+
+        if (cart.length === 0) {
+            if(cartContent) cartContent.style.display = 'none';
+            if(emptyMsg) emptyMsg.style.display = 'block';
+            return;
+        }
+
+        // Pobierz szczegóły produktów z backendu (Python)
+        const ids = cart.map(item => item.id);
+        
+        try {
+            const response = await fetch('/api/products-details', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ids)
+            });
+            const products = await response.json();
+
+            // Generuj HTML tabeli
+            cartTableBody.innerHTML = '';
+            let totalSum = 0;
+
+            cart.forEach(cartItem => {
+                const product = products.find(p => p.id === cartItem.id);
+                if (!product) return; // Produkt mógł zostać usunięty z bazy
+
+                const subtotal = product.price * cartItem.qty;
+                totalSum += subtotal;
+
+                const row = `
+                    <tr data-id="${cartItem.id}">
+                        <td class="product-img">
+                            <img src="${product.image || 'https://placehold.co/80x60'}" width="80">
+                        </td>
+                        <td class="product-name">
+                            <a href="szczegoly.html?id=${product.id}">${product.name}</a>
+                        </td>
+                        <td class="product-price">${product.price} zł</td>
+                        <td class="product-qty">
+                            <div class="qty-control">
+                                <button class="qty-minus">-</button>
+                                <input type="number" class="qty-input" value="${cartItem.qty}" readonly>
+                                <button class="qty-plus">+</button>
+                            </div>
+                        </td>
+                        <td class="product-subtotal">${subtotal.toFixed(2)} zł</td>
+                        <td class="product-remove">
+                            <button class="btn-remove"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                cartTableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelector('.summary-subtotal').innerText = totalSum.toFixed(2) + ' zł';
+            document.querySelector('.summary-total span:last-child').innerText = totalSum.toFixed(2) + ' zł';
+
+            // Obsługa guzików wewnątrz koszyka (+, -, usuń)
+            attachCartEvents();
+
+        } catch (error) {
+            console.error("Błąd pobierania koszyka:", error);
+        }
+    }
+
+    function attachCartEvents() {
+        // Minus
+        document.querySelectorAll('.qty-minus').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.target.closest('tr').dataset.id);
+                let cart = getCart();
+                const item = cart.find(i => i.id === id);
+                if (item && item.qty > 1) {
+                    item.qty--;
+                    saveCart(cart);
+                    renderCartPage(); // Odśwież widok
+                }
+            });
+        });
+
+        // Plus
+        document.querySelectorAll('.qty-plus').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.target.closest('tr').dataset.id);
+                let cart = getCart();
+                const item = cart.find(i => i.id === id);
+                if (item) {
+                    item.qty++;
+                    saveCart(cart);
+                    renderCartPage();
+                }
+            });
+        });
+
+        // Usuń
+        document.querySelectorAll('.btn-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.target.closest('tr').dataset.id);
+                let cart = getCart();
+                cart = cart.filter(i => i.id !== id);
+                saveCart(cart);
+                renderCartPage();
+            });
+        });
+    }
+
+    // --- 4. PRZEKIEROWANIE DO PODSUMOWANIA ---
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            const cart = getCart();
+            if (cart.length === 0) {
+                alert("Twój koszyk jest pusty!");
+                return;
+            }
+            // Zamiast wysyłać od razu POST, idziemy do formularza wyboru adresu
+            window.location.href = "/podsumowanie";
+        });
+    }
+
+    // --- 5. INITIALIZACJA ---
+    updateBadge(); // Uruchom przy starcie każdej strony
+
+    // --- 6. TOASTY ---
     window.showToast = function(msg) {
         let container = document.getElementById('toast-container');
         if (!container) {
@@ -2554,23 +2884,113 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.className = 'toast';
         toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${msg}</span>`;
         container.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
+        setTimeout(() => { toast.remove(); }, 3000);
     };
+    
+    // --- 7. FILTRY, SZUKANIE I SORTOWANIE (ZINTEGROWANE) ---
+    
+    // Elementy DOM
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    const resetFiltersBtn = document.getElementById('reset-filters');
+    const sortSelect = document.getElementById('sort-select');
+    const searchInput = document.querySelector('.search-bar input');
+    const searchBtn = document.querySelector('.search-bar .search-btn');
 
-    // --- 5. INITIALIZACJA LICZNIKA KOSZYKA ---
-    let count = parseInt(localStorage.getItem('cartBadgeCount')) || 0;
-    if (cartCountElement) cartCountElement.innerText = count;
+    // A. USTAWIENIE STANU POCZĄTKOWEGO (Po przeładowaniu)
+    // Jeśli w URL jest ?sort=2, ustawiamy select na 2, żeby użytkownik widział co wybrał
+    if (sortSelect) {
+        const params = new URLSearchParams(window.location.search);
+        const currentSort = params.get('sort');
+        if (currentSort) {
+            sortSelect.value = currentSort;
+        }
+    }
 
-    // --- 6. SCROLL TO TOP ---
-    if (backToTopBtn) {
-        window.addEventListener('scroll', () => {
-            backToTopBtn.style.display = window.scrollY > 300 ? 'flex' : 'none';
+    // B. FUNKCJA APLIKUJĄCA WSZYSTKIE FILTRY (Cena + Sortowanie + Szukanie + Kategoria)
+    function applyAllFilters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 1. Ceny
+        const min = document.getElementById('price-min').value;
+        const max = document.getElementById('price-max').value;
+
+        if (min) urlParams.set('price_min', min);
+        else urlParams.delete('price_min');
+
+        if (max) urlParams.set('price_max', max);
+        else urlParams.delete('price_max');
+
+        // 2. Sortowanie
+        if (sortSelect) {
+            const sortVal = sortSelect.value;
+            if (sortVal !== "0") urlParams.set('sort', sortVal);
+            else urlParams.delete('sort');
+        }
+
+        // 3. Wyszukiwanie (jeśli jest wpisane w headerze)
+        if (searchInput && searchInput.value.trim() !== "") {
+            urlParams.set('search', searchInput.value.trim());
+        }
+
+        // (Kategoria jest już w urlParams, jeśli tam była, więc jej nie ruszamy)
+
+        // Przeładowanie strony z nowymi parametrami
+        window.location.search = urlParams.toString();
+    }
+
+    // C. OBSŁUGA GUZIKA "ZASTOSUJ"
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            applyAllFilters();
         });
-        backToTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // D. OBSŁUGA GUZIKA "WYCZYŚĆ FILTRY" (Czerwony tekst)
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Usuwamy tylko filtry cenowe i sortowanie
+            // Zostawiamy kategorię (żeby nie wyrzucało do "Wszystkie") i szukanie
+            urlParams.delete('price_min');
+            urlParams.delete('price_max');
+            urlParams.delete('sort');
+            
+            // Jeśli chcesz czyścić też szukanie, odkomentuj linię poniżej:
+            // urlParams.delete('search');
+
+            window.location.search = urlParams.toString();
+        });
+    }
+
+    // E. OBSŁUGA WYSZUKIWANIA (Enter lub Klik)
+    function performSearch() {
+        const query = searchInput.value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (query) {
+            urlParams.set('search', query);
+        } else {
+            urlParams.delete('search');
+        }
+        
+        // Zazwyczaj przy nowym wyszukiwaniu resetuje się filtry ceny, 
+        // ale w tym rozwiązaniu zostawiamy je, aby można było szukać w przedziale cenowym.
+        
+        window.location.search = urlParams.toString();
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', performSearch);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
         });
     }
 });
@@ -2596,7 +3016,7 @@ PLIK: index.html
             </a>
         </div>
         <div class="search-bar">
-            <input type="text" placeholder="wyszukaj">
+            <input type="text" placeholder="wyszukaj produkt" value="{{ search_query or '' }}">
             <div class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></div>
         </div>
         <div class="user-actions">
@@ -2645,14 +3065,31 @@ PLIK: index.html
                 <div class="filter-group">
                     <label>Cena (zł):</label>
                     <div class="price-inputs">
-                        <input type="number" id="price-min" placeholder="Od">
-                        <input type="number" id="price-max" placeholder="Do">
+                        <input type="number" id="price-min" placeholder="Od" 
+                               value="{{ price_min if price_min is not none else '' }}">
+                        <input type="number" id="price-max" placeholder="Do" 
+                               value="{{ price_max if price_max is not none else '' }}">
                     </div>
                 </div>
+                
+                <h4>Sortowanie</h4>
+                <div class="select-sort">
+                    <label for="sort-select"> Sortuj według: ...</label>
+                    <select id="sort-select">
+                        <option value="0">Domyślnie</option>
+                        <option value="1">Cena: Od najniższej</option>
+                        <option value="2">Cena: Od najwyższej</option>
+                        <option value="3">Nazwa: Alfabetycznie [A-Z]</option>
+                        <option value="4">Nazwa: Alfabetycznie [Z-A]</option>
+                    </select>
+                </div>
+                
                 <button id="apply-filters" class="btn-filter">Zastosuj</button>
+                
+                <div class="reset-container">
+                    <a href="#" id="reset-filters"><i class="fa-solid fa-xmark"></i> Wyczyść filtry</a>
+                </div>
             </div>
-        </div>
-
         <main>
             <h1 class="section-title">
                 {% if current_category_id %}
@@ -2714,8 +3151,23 @@ PLIK: konto.html
             <a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a>
         </div>
         <div class="user-actions">
-            <a href="koszyk.html"><i class="fa-solid fa-basket-shopping"></i></a>
-            <a href="/logout" title="Wyloguj"><i class="fa-solid fa-power-off" style="color: red;"></i></a>
+            <a href="koszyk.html" class="cart-link">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span class="cart-count">0</span>
+            </a>
+
+            {% if user %}
+                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
+                    <i class="fa-solid fa-user-check" style="color: green;"></i>
+                </a>
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% else %}
+                <a href="login.html" title="Zaloguj się">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
         </div>
     </header>
 
@@ -2763,7 +3215,9 @@ PLIK: konto.html
                                 {% endif %}
                             </td>
                             <td>{{ order.suma_calkowita }} zł</td>
-                            <td><a href="#" class="details-link">Szczegóły</a></td>
+<td>
+    <a href="/zamowienie/{{ order.id_zamowienia }}" class="details-link">Szczegóły</a>
+</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -2786,121 +3240,79 @@ PLIK: koszyk.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strona internetowa</title>
+    <title>Twój Koszyk</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
      <header>
         <div class="logo">
-        <a href="index.html" class="logo-link">
-    <i class="fa-solid fa-shop"></i>
-    <span class="sr-only">Logo Sklepu Komputerowego</span>
-        </a>
-        </div>
-        <div class="search-bar">
-            <input type="text" placeholder="wyszukaj">
-            <div class="search-btn">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </div>
+            <a href="/" class="logo-link">
+                <i class="fa-solid fa-shop"></i>
+            </a>
         </div>
         <div class="user-actions">
-            <a href="konto.html">
-                <i class="fa-solid fa-user"></i>
-            </a>
             <a href="koszyk.html" class="cart-link">
                 <i class="fa-solid fa-basket-shopping"></i>
                 <span class="cart-count">0</span>
             </a>
+
+            {% if user %}
+                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
+                    <i class="fa-solid fa-user-check" style="color: green;"></i>
+                </a>
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% else %}
+                <a href="login.html" title="Zaloguj się">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
         </div>
     </header>
-    <div class="layout-container">
-<main class="cart-page">
-    <div class="checkout-stepper">
-    <div class="step active"><span class="step-num">1</span> Koszyk</div>
-    <div class="step-line"></div>
-    <div class="step"><span class="step-num">2</span> Dostawa</div>
-    <div class="step-line"></div>
-    <div class="step"><span class="step-num">3</span> Płatność</div>
-</div>
-    <h1>Twój koszyk</h1>
-    
-<div id="cart-content" class="cart-content">
-    <table class="cart-table">
-        <thead>
-            <tr>
-                <th>Produkt</th>
-                <th></th> <th>Cena</th>
-                <th>Ilość</th>
-                <th>Wartość</th>
-                <th>Usuń</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="product-img">
-                    <img src="https://placehold.co/80x60" alt="Płyta Główna">
-                </td>
-                <td data-label="Produkt" class="product-name">
-                    <a href="szczegoly.html">Płyta główna AORUS Z490</a>
-                    <p class="sku">Kod: 123456</p>
-                </td>
-                <td data-label="Cena" class="product-price">1 579,00 zł</td>
-                <td data-label="Ilość" class="product-qty">
-                    <div class="qty-control">
-                        <button class="qty-minus">-</button>
-                        <input type="number" class="qty-input" value="1" min="1">
-                        <button class="qty-plus">+</button>
-                    </div>
-                </td>
-                <td data-label="Wartość" class="product-subtotal">1 579,00 zł</td>
-                <td class="product-remove">
-                    <button title="Usuń z koszyka"><i class="fa-solid fa-trash"></i></button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
 
-    <aside class="cart-summary">
-        <div class="summary-box">
-            <h3>Podsumowanie</h3>
-            <div class="summary-row">
-                <span>Wartość produktów:</span>
-                <span class="summary-subtotal">1 579,00 zł</span>
-            </div>
-            <div class="summary-row">
-                <span>Dostawa:</span>
-                <span>0,00 zł</span>
-            </div>
-            <div class="summary-total">
-                <span>Do zapłaty:</span>
-                <span>1 579,00 zł</span>
-            </div>
-            <a href="podsumowanie.html"><button class="checkout-btn">Przejdź do kasy</button></a>
-            <a href="index.html" class="continue-shopping">Kontynuuj zakupy</a>
+    <div class="layout-container">
+    <main class="cart-page">
+        <h1>Twój koszyk</h1>
+        
+        <div id="empty-cart-msg" style="display: none; text-align: center; padding: 100px 20px;">
+            <i class="fa-solid fa-cart-shopping" style="font-size: 80px; color: #ddd; margin-bottom: 20px;"></i>
+            <h2>Twój koszyk jest obecnie pusty</h2>
+            <a href="/" style="background-color: #007bff; color: white; padding: 12px 25px; border-radius: 6px; font-weight: bold;">Wróć do sklepu</a>
         </div>
-        </aside>
-    <div id="empty-cart-msg" style="display: none; text-align: center; padding: 100px 20px;">
-        <i class="fa-solid fa-cart-shopping" style="font-size: 80px; color: #ddd; margin-bottom: 20px;"></i>
-        <h2>Twój koszyk jest obecnie pusty</h2>
-        <p style="margin-bottom: 30px; color: #777;">Dodaj produkty do koszyka, aby kontynuować zakupy.</p>
-        <a href="index.html" style="background-color: #007bff; color: white; padding: 12px 25px; border-radius: 6px; font-weight: bold;">Wróć do sklepu</a>
-    </div>
+
+        <div id="cart-content" class="cart-content">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Img</th> <th>Produkt</th> <th>Cena</th> <th>Ilość</th> <th>Suma</th> <th>Usuń</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+
+            <aside class="cart-summary">
+                <div class="summary-box">
+                    <h3>Podsumowanie</h3>
+                    <div class="summary-row">
+                        <span>Wartość:</span>
+                        <span class="summary-subtotal">0.00 zł</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Do zapłaty:</span>
+                        <span>0.00 zł</span>
+                    </div>
+                    <button class="checkout-btn">Złóż zamówienie</button>
+                    <a href="/" class="continue-shopping">Kontynuuj zakupy</a>
+                </div>
+            </aside>
+        </div>
     </main>
-        </div>
-    <footer class="footer-minimal">
-    <div class="footer-minimal-content">
-        <div class="footer-links">
-            <a href="#">Regulamin</a>
-            <span class="separator">|</span>
-            <a href="#">Polityka prywatności</a>
-            <span class="separator">|</span>
-            <a href="#">Pomoc</a>
-        </div>
-        <p class="copyright">&copy; 2026 Sklep Komputerowy. Wszystkie prawa zastrzeżone.</p>
     </div>
-</footer>
-<script src="{{ url_for('static', path='script.js') }}"></script>
+
+    <script src="{{ url_for('static', path='script.js') }}"></script>
 </body>
 </html>
 
@@ -2954,6 +3366,245 @@ PLIK: login.html
         </main>
     </div>
     <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>
+
+====================
+PLIK: podsumowanie.html
+====================
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podsumowanie Zamówienia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a>
+        </div>
+        <div class="header-title" style="font-size: 20px; font-weight: bold;">
+            Finalizacja Zamówienia
+        </div>
+        <div class="user-actions">
+            <a href="koszyk.html" style="font-size: 14px; text-decoration: underline;">Wróć do koszyka</a>
+        </div>
+    </header>
+
+    <div class="layout-container">
+        <div class="checkout-layout">
+            
+            <div class="checkout-left">
+                
+                {% if adres %}
+                <div id="default-address-section">
+                    <div class="default-address-card">
+                        <h3><i class="fa-solid fa-location-dot"></i> Twój domyślny adres dostawy</h3>
+                        <p>
+                            <strong>{{ adres.ulica }} {{ adres.nr_domu }}{% if adres.nr_lokalu %}/{{ adres.nr_lokalu }}{% endif %}</strong><br>
+                            {{ adres.kod_pocztowy }} {{ adres.miejscowosc }}
+                        </p>
+                        <div class="address-actions">
+                            <button type="button" class="btn-small" onclick="editDefaultAddress()">
+                                <i class="fa-solid fa-pen"></i> Edytuj / Użyj tego
+                            </button>
+                            <form action="/address/remove-default" method="POST" style="display:inline;">
+                                <button type="submit" class="btn-small delete">
+                                    <i class="fa-solid fa-trash"></i> Usuń domyślny
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="separator-text">LUB</div>
+
+                    <button type="button" class="btn-toggle-form" onclick="showNewAddressForm()">
+                        <i class="fa-solid fa-plus"></i> Wybierz / Dodaj nowy adres
+                    </button>
+                </div>
+                {% endif %}
+
+                <div id="checkout-form-container" style="{% if adres %}display: none;{% endif %}">
+                    <div class="checkout-box" style="border: 1px solid #007bff;">
+                        <h2 style="margin-top: 0;">Dane do wysyłki</h2>
+                        
+                        <form action="/order/submit" method="POST" id="order-form">
+                            <input type="hidden" name="cart_json" id="cart-json-input">
+
+                            <div class="form-group">
+                                <label>Ulica</label>
+                                <input type="text" name="ulica" id="input-ulica" required class="full-width">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nr domu</label>
+                                    <input type="text" name="nr_domu" id="input-nr_domu" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nr lokalu</label>
+                                    <input type="text" name="nr_lokalu" id="input-nr_lokalu">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Kod pocztowy</label>
+                                    <input type="text" name="kod_pocztowy" id="input-kod" required pattern="[0-9]{2}-[0-9]{3}" placeholder="00-000">
+                                </div>
+                                <div class="form-group">
+                                    <label>Miejscowość</label>
+                                    <input type="text" name="miejscowosc" id="input-miasto" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group-checkbox" style="margin-bottom: 20px; background: #f9f9f9; padding: 10px; border-radius: 4px;">
+                                <input type="checkbox" id="save_default" name="save_default" value="true">
+                                <label for="save_default">Zapisz ten adres jako domyślny na przyszłość</label>
+                            </div>
+
+                            <button type="submit" class="login-btn">Zatwierdź i Zamów</button>
+                            
+                            {% if adres %}
+                            <button type="button" class="btn-small" style="width: 100%; margin-top: 10px; text-align: center;" onclick="cancelNewAddress()">
+                                Anuluj i wróć do domyślnego
+                            </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkout-right">
+                <h3>Podsumowanie zamówienia</h3>
+                <div id="mini-cart-items">
+                    <p style="color: #999;">Ładowanie produktów...</p>
+                </div>
+                
+                <div class="mini-cart-total">
+                    <span>Razem:</span>
+                    <span id="mini-cart-total-price">0.00 zł</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% if adres %}
+    <script>
+        const defaultAddressData = {
+            ulica: "{{ adres.ulica }}",
+            nr_domu: "{{ adres.nr_domu }}",
+            nr_lokalu: "{{ adres.nr_lokalu or '' }}",
+            kod: "{{ adres.kod_pocztowy }}",
+            miasto: "{{ adres.miejscowosc }}"
+        };
+    </script>
+    {% else %}
+    <script>const defaultAddressData = null;</script>
+    {% endif %}
+
+    <script>
+        // --- LOGIKA PRZEŁĄCZANIA WIDOKÓW ---
+        
+        function showNewAddressForm() {
+            document.getElementById('default-address-section').style.display = 'none';
+            document.getElementById('checkout-form-container').style.display = 'block';
+            // Czyścimy formularz, bo to "nowy adres"
+            document.getElementById('order-form').reset();
+            // Przywracamy wartość ukrytego pola koszyka (bo reset() mógł go wyczyścić)
+            fillCartData();
+        }
+
+        function cancelNewAddress() {
+            document.getElementById('default-address-section').style.display = 'block';
+            document.getElementById('checkout-form-container').style.display = 'none';
+        }
+
+        function editDefaultAddress() {
+            // 1. Pokaż formularz
+            document.getElementById('default-address-section').style.display = 'none';
+            document.getElementById('checkout-form-container').style.display = 'block';
+            
+            // 2. Wypełnij formularz danymi domyślnymi
+            if (defaultAddressData) {
+                document.getElementById('input-ulica').value = defaultAddressData.ulica;
+                document.getElementById('input-nr_domu').value = defaultAddressData.nr_domu;
+                document.getElementById('input-nr_lokalu').value = defaultAddressData.nr_lokalu;
+                document.getElementById('input-kod').value = defaultAddressData.kod;
+                document.getElementById('input-miasto').value = defaultAddressData.miasto;
+                // Zaznacz checkbox, bo to w końcu domyślny
+                document.getElementById('save_default').checked = true;
+            }
+        }
+
+        function fillCartData() {
+            const cart = localStorage.getItem('myShopCart');
+            if (cart) {
+                document.getElementById('cart-json-input').value = cart;
+            }
+        }
+
+        // --- LOGIKA MINI KOSZYKA (JS) ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            fillCartData();
+            
+            const cartJson = localStorage.getItem('myShopCart');
+            if (!cartJson || JSON.parse(cartJson).length === 0) {
+                alert("Twój koszyk jest pusty!");
+                window.location.href = "/koszyk.html";
+                return;
+            }
+
+            const cart = JSON.parse(cartJson);
+            const ids = cart.map(item => item.id);
+
+            // Pobierz szczegóły produktów z API
+            try {
+                const response = await fetch('/api/products-details', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ids)
+                });
+                const products = await response.json();
+                
+                const container = document.getElementById('mini-cart-items');
+                container.innerHTML = '';
+                let total = 0;
+
+                cart.forEach(cartItem => {
+                    const product = products.find(p => p.id === cartItem.id);
+                    if (!product) return;
+
+                    const subtotal = product.price * cartItem.qty;
+                    total += subtotal;
+
+                    const html = `
+                        <div class="mini-cart-item">
+                            <img src="${product.image || 'https://placehold.co/50'}" alt="">
+                            <div class="mini-cart-info">
+                                <span class="mini-cart-title">${product.name}</span>
+                                <div class="mini-cart-meta">
+                                    ${cartItem.qty} szt. x ${product.price} zł
+                                </div>
+                            </div>
+                            <div style="font-weight: bold;">
+                                ${subtotal.toFixed(2)} zł
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+
+                document.getElementById('mini-cart-total-price').innerText = total.toFixed(2) + " zł";
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('mini-cart-items').innerText = "Błąd wczytywania produktów.";
+            }
+        });
+    </script>
 </body>
 </html>
 
@@ -3041,11 +3692,23 @@ PLIK: szczegoly.html
             <div class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></div>
         </div>
         <div class="user-actions">
-            <a href="konto.html"><i class="fa-solid fa-user"></i></a>
             <a href="koszyk.html" class="cart-link">
                 <i class="fa-solid fa-basket-shopping"></i>
                 <span class="cart-count">0</span>
             </a>
+
+            {% if user %}
+                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
+                    <i class="fa-solid fa-user-check" style="color: green;"></i>
+                </a>
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% else %}
+                <a href="login.html" title="Zaloguj się">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
         </div>
     </header>
 
@@ -3116,9 +3779,593 @@ PLIK: szczegoly.html
 </html>
 
 ====================
+PLIK: szczegoly_zamowienia.html
+====================
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zamówienie {{ order.numer_zamowienia }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo"><a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a></div>
+        <div class="user-actions">
+            <a href="/konto.html"><i class="fa-solid fa-user"></i></a>
+        </div>
+    </header>
+
+    <div class="layout-container">
+        <main class="account-container" style="flex-direction: column; align-items: center;">
+            <div class="summary-card" style="width: 100%; max-width: 800px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Zamówienie: {{ order.numer_zamowienia }}</h2>
+                    <span class="status shipped">{{ order.status_zamowienia }}</span>
+                </div>
+                
+                <p><strong>Data złożenia:</strong> {{ order.data_zlozenia.strftime('%d.%m.%Y %H:%M') }}</p>
+                
+                <div class="divider" style="margin: 20px 0; border-top: 1px solid #eee;"></div>
+
+                <h3>Adres dostawy:</h3>
+                {% if adres %}
+                <p>
+                    {{ adres.ulica }} {{ adres.nr_domu }}{% if adres.nr_lokalu %}/{{ adres.nr_lokalu }}{% endif %}<br>
+                    {{ adres.kod_pocztowy }} {{ adres.miejscowosc }}
+                </p>
+                {% else %}
+                <p>Brak danych adresowych (archiwum).</p>
+                {% endif %}
+
+                <div class="divider" style="margin: 20px 0; border-top: 1px solid #eee;"></div>
+
+                <h3>Produkty:</h3>
+                <table class="cart-table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th>Produkt</th>
+                            <th>Cena jedn.</th>
+                            <th>Ilość</th>
+                            <th>Suma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    {% if item.model.zdjecie_url %}
+                                        <img src="{{ item.model.zdjecie_url }}" alt="" style="width: 50px; height: auto; border-radius: 4px;">
+                                    {% else %}
+                                        <div style="width: 50px; height: 35px; background: #eee; border-radius: 4px;"></div>
+                                    {% endif %}
+                                    <strong>{{ item.model.nazwa_modelu }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ item.cena_w_chwili_zakupu }} zł</td>
+                            <td>{{ item.ilosc }} szt.</td>
+                            <td>{{ item.ilosc * item.cena_w_chwili_zakupu }} zł</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="price-summary" style="margin-top: 30px; text-align: right;">
+                    <div class="s-row total">
+                        <span>Razem do zapłaty:</span>
+                        <span>{{ order.suma_calkowita }} zł</span>
+                    </div>
+                </div>
+
+                <a href="/konto.html" class="back-link" style="margin-top: 20px; display: inline-block;">
+                    <i class="fa-solid fa-arrow-left"></i> Wróć do listy zamówień
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Jeśli w URL jest parametr ?clear_cart=1, czyścimy localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('clear_cart') === '1') {
+            localStorage.removeItem('myShopCart');
+        }
+    </script>
+</body>
+</html>
+
+====================
 PLIK: .env
 ====================
 DATABASE_URL=postgresql://neondb_owner:npg_DEw1xfvGFNI7@ep-sparkling-cake-agwwvugr-pooler.c-2.eu-central-1.aws.neon.tech/sklepInternetowy?sslmode=require
+
+====================
+PLIK: bazanowa.txt
+====================
+-- we don't know how to generate root <with-no-name> (class Root) :(
+
+comment on database postgres is 'default administrative connection database';
+
+grant connect, create, temporary on database neondb to neon_superuser;
+
+grant connect, create, temporary on database "sklepInternetowy" to neon_superuser;
+
+create table adres
+(
+    id_adresu    serial
+        primary key,
+    ulica        varchar(100),
+    nr_domu      varchar(10) not null,
+    nr_lokalu    varchar(10),
+    kod_pocztowy char(6)     not null,
+    miejscowosc  varchar(50) not null
+);
+
+alter table adres
+    owner to neondb_owner;
+
+grant usage on sequence adres_id_adresu_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence adres_id_adresu_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence adres_id_adresu_seq to rola_administrator;
+
+grant insert on adres to rola_klient_niezarejestrowany;
+
+grant insert, select, update (ulica, nr_domu, nr_lokalu, kod_pocztowy, miejscowosc) on adres to rola_klient_zarejestrowany;
+
+grant select on adres to rola_sprzedawca;
+
+grant select on adres to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on adres to rola_administrator;
+
+create table kategoria
+(
+    id_kategorii    serial
+        primary key,
+    nazwa_kategorii varchar(50) not null,
+    opis_kategorii  varchar(255)
+);
+
+alter table kategoria
+    owner to neondb_owner;
+
+grant usage on sequence kategoria_id_kategorii_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence kategoria_id_kategorii_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence kategoria_id_kategorii_seq to rola_administrator;
+
+grant select on kategoria to rola_klient_niezarejestrowany;
+
+grant select on kategoria to rola_klient_zarejestrowany;
+
+grant select on kategoria to rola_sprzedawca;
+
+grant select on kategoria to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on kategoria to rola_administrator;
+
+create table rola
+(
+    id_roli    serial
+        primary key,
+    nazwa_roli varchar(30) not null
+);
+
+alter table rola
+    owner to neondb_owner;
+
+grant usage on sequence rola_id_roli_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence rola_id_roli_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence rola_id_roli_seq to rola_administrator;
+
+grant delete, insert, references, select, trigger, truncate, update on rola to rola_administrator;
+
+create table klient
+(
+    id_klienta       serial
+        primary key,
+    imie             varchar(50)  not null,
+    drugie_imie      varchar(50),
+    nazwisko         varchar(50)  not null,
+    adres_email      varchar(40)  not null
+        unique,
+    haslo_hash       varchar(255) not null,
+    data_rejestracji timestamp    not null
+);
+
+alter table klient
+    owner to neondb_owner;
+
+grant usage on sequence klient_id_klienta_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence klient_id_klienta_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence klient_id_klienta_seq to rola_administrator;
+
+create index idx_klient_imie_nazwisko
+    on klient (imie, nazwisko);
+
+grant insert on klient to rola_klient_niezarejestrowany;
+
+grant select, update (imie, drugie_imie, nazwisko, adres_email, haslo_hash) on klient to rola_klient_zarejestrowany;
+
+grant select on klient to rola_sprzedawca;
+
+grant select on klient to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on klient to rola_administrator;
+
+create table pracownik
+(
+    id_pracownika serial
+        primary key,
+    login         varchar(50)  not null
+        unique,
+    haslo_hash    varchar(255) not null,
+    imie          varchar(50)  not null,
+    nazwisko      varchar(50)  not null,
+    plec          text,
+    id_roli       integer      not null
+        constraint fk_pracownik_rola
+            references rola
+);
+
+alter table pracownik
+    owner to neondb_owner;
+
+grant usage on sequence pracownik_id_pracownika_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence pracownik_id_pracownika_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence pracownik_id_pracownika_seq to rola_administrator;
+
+grant delete, insert, references, select, trigger, truncate, update on pracownik to rola_administrator;
+
+create table klient_adres
+(
+    klient2id_klienta integer not null
+        constraint fk_ka_klient
+            references klient,
+    adres2id_adresu   integer not null
+        constraint fk_ka_adres
+            references adres,
+    czy_domyslny      boolean default false,
+    primary key (klient2id_klienta, adres2id_adresu)
+);
+
+alter table klient_adres
+    owner to neondb_owner;
+
+grant insert on klient_adres to rola_klient_niezarejestrowany;
+
+grant insert, select, update (czy_domyslny) on klient_adres to rola_klient_zarejestrowany;
+
+grant select on klient_adres to rola_sprzedawca;
+
+grant select on klient_adres to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on klient_adres to rola_administrator;
+
+create table model_produktu
+(
+    id_modelu       serial
+        primary key,
+    nazwa_modelu    varchar(100)  not null,
+    opis            text,
+    cena_katalogowa numeric(8, 2) not null,
+    zdjecie_url     varchar(255),
+    id_kategorii    integer       not null
+        constraint fk_model_kategoria
+            references kategoria,
+    stan_magazynowy integer default 100
+);
+
+alter table model_produktu
+    owner to neondb_owner;
+
+grant usage on sequence model_produktu_id_modelu_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence model_produktu_id_modelu_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence model_produktu_id_modelu_seq to rola_administrator;
+
+grant select on model_produktu to rola_klient_niezarejestrowany;
+
+grant select on model_produktu to rola_klient_zarejestrowany;
+
+grant select, update (opis, cena_katalogowa) on model_produktu to rola_sprzedawca;
+
+grant select on model_produktu to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on model_produktu to rola_administrator;
+
+create table egzemplarz_produktu
+(
+    id_egzemplarza     serial
+        primary key,
+    numer_seryjny      varchar(50) not null
+        unique,
+    kod_wewnetrzny     varchar(50) not null
+        unique,
+    status_egzemplarza varchar(20) not null,
+    id_modelu          integer     not null
+        constraint fk_egzemplarz_model
+            references model_produktu
+);
+
+alter table egzemplarz_produktu
+    owner to neondb_owner;
+
+grant usage on sequence egzemplarz_produktu_id_egzemplarza_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence egzemplarz_produktu_id_egzemplarza_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence egzemplarz_produktu_id_egzemplarza_seq to rola_administrator;
+
+grant select on egzemplarz_produktu to rola_sprzedawca;
+
+grant select, update (status_egzemplarza) on egzemplarz_produktu to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on egzemplarz_produktu to rola_administrator;
+
+create table zamowienie
+(
+    id_zamowienia          serial
+        primary key,
+    numer_zamowienia       varchar(50)    not null
+        unique,
+    data_zlozenia          timestamp      not null,
+    status_zamowienia      varchar(20)    not null,
+    suma_calkowita         numeric(10, 2) not null,
+    telefon_kontakt_do_zam varchar(9),
+    email_kontakt_do_zam   varchar(40),
+    id_adresu              integer        not null
+        constraint fk_zam_adres
+            references adres,
+    id_klienta             integer        not null
+        constraint fk_zam_klient
+            references klient
+);
+
+alter table zamowienie
+    owner to neondb_owner;
+
+grant usage on sequence zamowienie_id_zamowienia_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence zamowienie_id_zamowienia_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence zamowienie_id_zamowienia_seq to rola_administrator;
+
+grant insert on zamowienie to rola_klient_niezarejestrowany;
+
+grant insert, select on zamowienie to rola_klient_zarejestrowany;
+
+grant select, update (status_zamowienia) on zamowienie to rola_sprzedawca;
+
+grant select, update (status_zamowienia) on zamowienie to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on zamowienie to rola_administrator;
+
+create table pozycja_zamowienia
+(
+    id_pozycji           serial
+        primary key,
+    ilosc                integer        not null,
+    cena_w_chwili_zakupu numeric(10, 2) not null,
+    id_modelu            integer        not null
+        constraint fk_poz_model
+            references model_produktu,
+    id_zamowienia        integer        not null
+        constraint fk_poz_zamowienie
+            references zamowienie
+);
+
+alter table pozycja_zamowienia
+    owner to neondb_owner;
+
+grant usage on sequence pozycja_zamowienia_id_pozycji_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence pozycja_zamowienia_id_pozycji_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence pozycja_zamowienia_id_pozycji_seq to rola_administrator;
+
+grant insert on pozycja_zamowienia to rola_klient_niezarejestrowany;
+
+grant insert, select on pozycja_zamowienia to rola_klient_zarejestrowany;
+
+grant select on pozycja_zamowienia to rola_sprzedawca;
+
+grant select on pozycja_zamowienia to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on pozycja_zamowienia to rola_administrator;
+
+create table realizacja_pozycji
+(
+    id_realizacji                     serial
+        primary key,
+    pozycja_zamowieniaid_pozycji      integer not null
+        constraint fk_real_pozycja
+            references pozycja_zamowienia,
+    egzemplarz_produktuid_egzemplarza integer not null
+        constraint fk_real_egzemplarz
+            references egzemplarz_produktu
+);
+
+alter table realizacja_pozycji
+    owner to neondb_owner;
+
+grant usage on sequence realizacja_pozycji_id_realizacji_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence realizacja_pozycji_id_realizacji_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence realizacja_pozycji_id_realizacji_seq to rola_administrator;
+
+grant select on realizacja_pozycji to rola_sprzedawca;
+
+grant select on realizacja_pozycji to rola_magazynier;
+
+grant delete, insert, references, select, trigger, truncate, update on realizacja_pozycji to rola_administrator;
+
+create table log_zmiana_statusu
+(
+    id_logu       serial
+        primary key,
+    stary_status  text,
+    nowy_status   text,
+    data_zmiany   date,
+    id_zamowienia integer not null
+        constraint fk_log_zamowienie
+            references zamowienie,
+    id_pracownika integer not null
+        constraint fk_log_pracownik
+            references pracownik
+);
+
+alter table log_zmiana_statusu
+    owner to neondb_owner;
+
+grant usage on sequence log_zmiana_statusu_id_logu_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence log_zmiana_statusu_id_logu_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence log_zmiana_statusu_id_logu_seq to rola_administrator;
+
+grant select on log_zmiana_statusu to rola_klient_zarejestrowany;
+
+grant select on log_zmiana_statusu to rola_sprzedawca;
+
+grant select on log_zmiana_statusu to rola_magazynier;
+
+grant select on log_zmiana_statusu to rola_administrator;
+
+create table telefony_pracownikow
+(
+    id_telefonu            serial
+        primary key,
+    numer                  text,
+    typ                    text,
+    pracownikid_pracownika integer not null
+        constraint fk_tel_pracownik
+            references pracownik
+);
+
+alter table telefony_pracownikow
+    owner to neondb_owner;
+
+grant usage on sequence telefony_pracownikow_id_telefonu_seq to rola_klient_niezarejestrowany;
+
+grant usage on sequence telefony_pracownikow_id_telefonu_seq to rola_klient_zarejestrowany;
+
+grant select, update, usage on sequence telefony_pracownikow_id_telefonu_seq to rola_administrator;
+
+grant delete, insert, references, select, trigger, truncate, update on telefony_pracownikow to rola_administrator;
+
+create view v_dostepne_produkty
+            (id_modelu, nazwa_modelu, nazwa_kategorii, cena_katalogowa, ilosc_dostepna_fizycznie, ilosc_teoretyczna) as
+SELECT m.id_modelu,
+       m.nazwa_modelu,
+       k.nazwa_kategorii,
+       m.cena_katalogowa,
+       (SELECT count(*) AS count
+        FROM egzemplarz_produktu e
+        WHERE e.id_modelu = m.id_modelu
+          AND e.status_egzemplarza::text = 'Dostepny'::text) AS ilosc_dostepna_fizycznie,
+       m.stan_magazynowy                                     AS ilosc_teoretyczna
+FROM model_produktu m
+         JOIN kategoria k ON m.id_kategorii = k.id_kategorii
+WHERE m.stan_magazynowy > 0;
+
+alter table v_dostepne_produkty
+    owner to neondb_owner;
+
+grant select on v_dostepne_produkty to rola_klient_niezarejestrowany;
+
+grant select on v_dostepne_produkty to rola_klient_zarejestrowany;
+
+grant select on v_dostepne_produkty to rola_sprzedawca;
+
+grant select on v_dostepne_produkty to rola_magazynier;
+
+grant select on v_dostepne_produkty to rola_administrator;
+
+create view v_szczegoly_zamowienia
+            (numer_zamowienia, data_zlozenia, status_zamowienia, suma_calkowita, imie, nazwisko, miejscowosc, ulica,
+             nr_domu, nr_lokalu, ilosc, cena_w_chwili_zakupu, nazwa_modelu)
+as
+SELECT z.numer_zamowienia,
+       z.data_zlozenia,
+       z.status_zamowienia,
+       z.suma_calkowita,
+       k.imie,
+       k.nazwisko,
+       a.miejscowosc,
+       a.ulica,
+       a.nr_domu,
+       a.nr_lokalu,
+       pz.ilosc,
+       pz.cena_w_chwili_zakupu,
+       m.nazwa_modelu
+FROM zamowienie z
+         JOIN klient k ON z.id_klienta = k.id_klienta
+         JOIN adres a ON z.id_adresu = a.id_adresu
+         JOIN pozycja_zamowienia pz ON z.id_zamowienia = pz.id_zamowienia
+         JOIN model_produktu m ON pz.id_modelu = m.id_modelu;
+
+alter table v_szczegoly_zamowienia
+    owner to neondb_owner;
+
+grant select on v_szczegoly_zamowienia to rola_klient_niezarejestrowany;
+
+grant select on v_szczegoly_zamowienia to rola_klient_zarejestrowany;
+
+grant select on v_szczegoly_zamowienia to rola_sprzedawca;
+
+grant select on v_szczegoly_zamowienia to rola_magazynier;
+
+grant select on v_szczegoly_zamowienia to rola_administrator;
+
+create function func_zapisz_cene_historyczna() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    -- Sprawdzamy czy cena nie została podana lub jest 0
+    IF NEW.cena_w_chwili_zakupu IS NULL OR NEW.cena_w_chwili_zakupu = 0 THEN
+        -- Pobieramy aktualną cenę z katalogu i przypisujemy do nowego rekordu
+        SELECT cena_katalogowa INTO NEW.cena_w_chwili_zakupu
+        FROM model_produktu
+        WHERE id_modelu = NEW.id_modelu;
+    END IF;
+    RETURN NEW; -- Zwracamy zmodyfikowany rekord
+END;
+$$;
+
+alter function func_zapisz_cene_historyczna() owner to neondb_owner;
+
+create function func_aktualizacja_stanu_licznika() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    -- Zmniejszamy stan magazynowy modelu o tyle sztuk, ile klient kupił
+    UPDATE model_produktu
+    SET stan_magazynowy = stan_magazynowy - NEW.ilosc
+    WHERE id_modelu = NEW.id_modelu;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function func_aktualizacja_stanu_licznika() owner to neondb_owner;
+
 
 ====================
 PLIK: database.py
@@ -3158,19 +4405,19 @@ def get_db():
 ====================
 PLIK: main.py
 ====================
-from fastapi import FastAPI, Request, Depends, Form
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request, Depends, Form, Body
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+import json
 
 import models
 from database import engine, get_db
 
-# Tworzenie tabel (tylko brakujących)
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -3186,33 +4433,248 @@ def get_current_user(request: Request, db: Session):
         return None
     return db.query(models.Klient).filter(models.Klient.id_klienta == user_id).first()
 
-# --- ROUTING ---
+# --- ENDPOINTY ---
 
 @app.get("/")
 @app.get("/index.html")
 def read_root(
     request: Request, 
     category_id: Optional[int] = None,
+    price_min: Optional[float] = None, 
+    price_max: Optional[float] = None,
+    search: Optional[str] = None, 
+    sort: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     categories = db.query(models.Kategoria).all()
     query = db.query(models.ModelProduktu)
+
     if category_id:
         query = query.filter(models.ModelProduktu.id_kategorii == category_id)
+    if price_min is not None:
+        query = query.filter(models.ModelProduktu.cena_katalogowa >= price_min)
+    if price_max is not None:
+        query = query.filter(models.ModelProduktu.cena_katalogowa <= price_max)
+    if search:
+        query = query.filter(models.ModelProduktu.nazwa_modelu.ilike(f"%{search}%"))
+
+    if sort == '1':
+        query = query.order_by(models.ModelProduktu.cena_katalogowa.asc())
+    elif sort == '2':
+        query = query.order_by(models.ModelProduktu.cena_katalogowa.desc())
+    elif sort == '3':
+        query = query.order_by(models.ModelProduktu.nazwa_modelu.asc())
+    elif sort == '4':
+        query = query.order_by(models.ModelProduktu.nazwa_modelu.desc())
+    else:
+        query = query.order_by(models.ModelProduktu.id_modelu.desc())
+
     products = query.all()
     user = get_current_user(request, db)
-    
+
     return templates.TemplateResponse("index.html", {
         "request": request, 
         "products": products,
         "categories": categories,
         "user": user,
-        "current_category_id": category_id
+        "current_category_id": category_id,
+        "price_min": price_min,
+        "price_max": price_max,
+        "search_query": search,
+        "current_sort": sort
     })
 
+@app.post("/api/products-details")
+async def get_products_details(ids: List[int] = Body(...), db: Session = Depends(get_db)):
+    products = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu.in_(ids)).all()
+    return [{"id": p.id_modelu, "name": p.nazwa_modelu, "price": p.cena_katalogowa, "image": p.zdjecie_url} for p in products]
+
+# --- NOWOŚĆ: Strona Podsumowania (Checkout) z autouzupełnianiem ---
+@app.get("/podsumowanie")
+def checkout_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login.html")
+    
+    # Szukamy adresu domyślnego w tabeli łączącej klient_adres
+    # 1. Znajdź wpis w klient_adres gdzie czy_domyslny = True dla tego klienta
+    klient_adres_entry = db.query(models.KlientAdres).filter(
+        models.KlientAdres.klient2id_klienta == user.id_klienta,
+        models.KlientAdres.czy_domyslny == True
+    ).first()
+
+    default_address = None
+    if klient_adres_entry:
+        # 2. Jeśli znaleziono, pobierz właściwy obiekt adresu
+        default_address = db.query(models.Adres).filter(
+            models.Adres.id_adresu == klient_adres_entry.adres2id_adresu
+        ).first()
+
+    return templates.TemplateResponse("podsumowanie.html", {
+        "request": request, 
+        "adres": default_address
+    })
+
+# --- NOWOŚĆ: Usuwanie adresu domyślnego (Dezaktywacja flagi) ---
+@app.post("/address/remove-default")
+def remove_default_address(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return JSONResponse(status_code=401, content={"message": "Zaloguj się"})
+    
+    # Znajdź obecny domyślny i usuń flagę
+    defaults = db.query(models.KlientAdres).filter(
+        models.KlientAdres.klient2id_klienta == user.id_klienta,
+        models.KlientAdres.czy_domyslny == True
+    ).all()
+    
+    for d in defaults:
+        d.czy_domyslny = False
+    
+    db.commit()
+    # Przeładuj stronę
+    return RedirectResponse(url="/podsumowanie", status_code=303)
+
+# --- NOWOŚĆ: Składanie zamówienia z formularza HTML ---
+@app.post("/order/submit")
+async def submit_order(
+    request: Request,
+    ulica: str = Form(...),
+    nr_domu: str = Form(...),
+    nr_lokalu: str = Form(None),
+    kod_pocztowy: str = Form(...),
+    miejscowosc: str = Form(...),
+    save_default: bool = Form(False), # Checkbox
+    cart_json: str = Form(...),       # Koszyk jako JSON string z ukrytego pola
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login.html", status_code=303)
+
+    try:
+        cart_data = json.loads(cart_json)
+    except:
+        return "Błąd danych koszyka"
+
+    if not cart_data:
+        return "Koszyk pusty"
+
+    # 1. Tworzymy nowy adres w bazie dla tego zamówienia (bezpieczeństwo historii)
+    #    lub można szukać duplikatu, ale dla prostoty tworzymy nowy.
+    new_address = models.Adres(
+        ulica=ulica,
+        nr_domu=nr_domu,
+        nr_lokalu=nr_lokalu,
+        kod_pocztowy=kod_pocztowy,
+        miejscowosc=miejscowosc
+    )
+    db.add(new_address)
+    db.flush() # Żeby dostać ID adresu
+
+    # 2. Obsługa adresu domyślnego
+    # Jeśli użytkownik chce zapisać jako domyślny, musimy powiązać ten adres z klientem
+    if save_default:
+        # Najpierw "odznaczamy" poprzedni domyślny adres
+        existing_defaults = db.query(models.KlientAdres).filter(
+            models.KlientAdres.klient2id_klienta == user.id_klienta,
+            models.KlientAdres.czy_domyslny == True
+        ).all()
+        for ka in existing_defaults:
+            ka.czy_domyslny = False
+        
+        # Tworzymy nowe powiązanie w klient_adres
+        new_link = models.KlientAdres(
+            klient2id_klienta=user.id_klienta,
+            adres2id_adresu=new_address.id_adresu,
+            czy_domyslny=True
+        )
+        db.add(new_link)
+    
+    # Możemy też dodać powiązanie bez "czy_domyslny", żeby klient miał historię adresów,
+    # ale skupmy się na wymaganiu.
+
+    # 3. Obliczamy sumę
+    total_price = 0.0
+    order_items_objs = []
+
+    for item in cart_data:
+        p_id = int(item['id'])
+        qty = int(item['qty'])
+        product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == p_id).first()
+        if product:
+            total_price += product.cena_katalogowa * qty
+            order_items_objs.append({
+                "product": product,
+                "qty": qty,
+                "price": product.cena_katalogowa
+            })
+
+    # 4. Tworzymy zamówienie
+    new_order = models.Zamowienie(
+        numer_zamowienia=f"ORD-{int(datetime.now().timestamp())}",
+        data_zlozenia=datetime.now(),
+        status_zamowienia="Nowe",
+        suma_calkowita=total_price,
+        id_klienta=user.id_klienta,
+        id_adresu=new_address.id_adresu,
+        email_kontakt_do_zam=user.adres_email
+    )
+    db.add(new_order)
+    db.flush()
+
+    # 5. Pozycje zamówienia
+    for item in order_items_objs:
+        pos = models.PozycjaZamowienia(
+            ilosc=item["qty"],
+            cena_w_chwili_zakupu=item["price"],
+            id_modelu=item["product"].id_modelu,
+            id_zamowienia=new_order.id_zamowienia
+        )
+        db.add(pos)
+        # Opcjonalnie: zmniejsz stan magazynowy
+        item["product"].stan_magazynowy -= item["qty"]
+
+    db.commit()
+
+    # Przekierowanie do szczegółów tego zamówienia + czyszczenie koszyka (frontend musi wyczyścić po redirectcie,
+    # ale tutaj robimy proste przekierowanie. JS na stronie sukcesu może wyczyścić localStorage).
+    # Prostszą metodą jest przekierowanie do strony z parametrem ?clear_cart=1
+    return RedirectResponse(url=f"/zamowienie/{new_order.id_zamowienia}?clear_cart=1", status_code=303)
+
+
+@app.get("/zamowienie/{order_id}")
+def order_details(request: Request, order_id: int, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login.html")
+    
+    order = db.query(models.Zamowienie).filter(
+        models.Zamowienie.id_zamowienia == order_id,
+        models.Zamowienie.id_klienta == user.id_klienta
+    ).first()
+    
+    if not order:
+        return "Nie znaleziono zamówienia."
+    
+    # Pobierz adres powiązany z zamówieniem
+    adres = db.query(models.Adres).filter(models.Adres.id_adresu == order.id_adresu).first()
+
+    items = db.query(models.PozycjaZamowienia).filter(
+        models.PozycjaZamowienia.id_zamowienia == order_id
+    ).all()
+    
+    return templates.TemplateResponse("szczegoly_zamowienia.html", {
+        "request": request, 
+        "order": order, 
+        "items": items,
+        "adres": adres,
+        "user": user
+    })
+
+# --- POZOSTAŁE (Login, Register, itp) ---
 @app.get("/login.html")
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+def login_page(request: Request): return templates.TemplateResponse("login.html", {"request": request})
 
 @app.post("/login")
 def login_user(request: Request, email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
@@ -3220,7 +4682,7 @@ def login_user(request: Request, email: str = Form(...), password: str = Form(..
     if not user or user.haslo_hash != password:
         return templates.TemplateResponse("login.html", {"request": request, "error": "Błędny email lub hasło"})
     request.session["user_id"] = user.id_klienta
-    return RedirectResponse(url="/konto.html", status_code=303)
+    return RedirectResponse(url="/", status_code=303)
 
 @app.get("/logout")
 def logout(request: Request):
@@ -3228,40 +4690,22 @@ def logout(request: Request):
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/rejestracja.html")
-def register_page(request: Request):
-    return templates.TemplateResponse("rejestracja.html", {"request": request})
+def register_page(request: Request): return templates.TemplateResponse("rejestracja.html", {"request": request})
 
 @app.post("/register")
 def register_user(imie: str = Form(...), nazwisko: str = Form(...), email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    if db.query(models.Klient).filter(models.Klient.adres_email == email).first():
-        return "Taki email jest już zajęty!"
+    if db.query(models.Klient).filter(models.Klient.adres_email == email).first(): return "Email zajęty"
     new_user = models.Klient(imie=imie, nazwisko=nazwisko, adres_email=email, haslo_hash=password, data_rejestracji=datetime.now())
-    try:
-        db.add(new_user)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        return f"Błąd bazy danych: {e}"
+    try: db.add(new_user); db.commit()
+    except: db.rollback()
     return RedirectResponse(url="/login.html", status_code=303)
 
-# --- ZMIANA TUTAJ: Pobieranie zamówień ---
 @app.get("/konto.html")
 def account_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login.html")
-
-    # Pobierz zamówienia tego klienta, posortowane od najnowszych
-    orders = db.query(models.Zamowienie)\
-        .filter(models.Zamowienie.id_klienta == user.id_klienta)\
-        .order_by(models.Zamowienie.data_zlozenia.desc())\
-        .all()
-
-    return templates.TemplateResponse("konto.html", {
-        "request": request,
-        "user": user,
-        "orders": orders  # Przekazujemy listę zamówień do HTML
-    })
+    if not user: return RedirectResponse(url="/login.html")
+    orders = db.query(models.Zamowienie).filter(models.Zamowienie.id_klienta == user.id_klienta).order_by(models.Zamowienie.data_zlozenia.desc()).all()
+    return templates.TemplateResponse("konto.html", {"request": request, "user": user, "orders": orders})
 
 @app.get("/koszyk.html")
 def cart_page(request: Request, db: Session = Depends(get_db)):
@@ -3271,21 +4715,35 @@ def cart_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/szczegoly.html")
 def details_page(request: Request, id: int = None, db: Session = Depends(get_db)):
     product = None
-    if id:
-        product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == id).first()
+    if id: product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == id).first()
     return templates.TemplateResponse("szczegoly.html", {"request": request, "product": product})
 
 ====================
 PLIK: models.py
 ====================
-from sqlalchemy import Column, Integer, String, Boolean, Float, Numeric, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, Numeric, DateTime, Text, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
+# --- TABELE ---
+
+class Adres(Base):
+    __tablename__ = "adres"
+    id_adresu = Column(Integer, primary_key=True, index=True)
+    ulica = Column(String(100))
+    nr_domu = Column(String(10), nullable=False)
+    nr_lokalu = Column(String(10), nullable=True)
+    kod_pocztowy = Column(String(6), nullable=False)
+    miejscowosc = Column(String(50), nullable=False)
+
+class Rola(Base):
+    __tablename__ = "rola"
+    id_roli = Column(Integer, primary_key=True, index=True)
+    nazwa_roli = Column(String(30), nullable=False)
+
 class Klient(Base):
     __tablename__ = "klient"
-
     id_klienta = Column(Integer, primary_key=True, index=True)
     imie = Column(String(50), nullable=False)
     drugie_imie = Column(String(50), nullable=True)
@@ -3294,37 +4752,72 @@ class Klient(Base):
     haslo_hash = Column(String(255), nullable=False)
     data_rejestracji = Column(DateTime, default=datetime.now, nullable=False)
 
+class KlientAdres(Base):
+    __tablename__ = "klient_adres"
+    # Klucz złożony (composite key) zgodnie z Twoim SQL
+    klient2id_klienta = Column(Integer, ForeignKey("klient.id_klienta"), primary_key=True)
+    adres2id_adresu = Column(Integer, ForeignKey("adres.id_adresu"), primary_key=True)
+    czy_domyslny = Column(Boolean, default=False)
+
+class Pracownik(Base):
+    __tablename__ = "pracownik"
+    id_pracownika = Column(Integer, primary_key=True, index=True)
+    login = Column(String(50), unique=True, nullable=False)
+    haslo_hash = Column(String(255), nullable=False)
+    imie = Column(String(50), nullable=False)
+    nazwisko = Column(String(50), nullable=False)
+    plec = Column(Text, nullable=True)
+    id_roli = Column(Integer, ForeignKey("rola.id_roli"), nullable=False)
+
 class Kategoria(Base):
     __tablename__ = "kategoria"
-
     id_kategorii = Column(Integer, primary_key=True, index=True)
     nazwa_kategorii = Column(String(50), nullable=False)
     opis_kategorii = Column(String(255))
 
 class ModelProduktu(Base):
     __tablename__ = "model_produktu"
-
     id_modelu = Column(Integer, primary_key=True, index=True)
     nazwa_modelu = Column(String(100), nullable=False)
     opis = Column(Text, nullable=True)
     cena_katalogowa = Column(Float, nullable=False) 
     zdjecie_url = Column(String(255), nullable=True)
     stan_magazynowy = Column(Integer, default=100)
-    
     id_kategorii = Column(Integer, ForeignKey("kategoria.id_kategorii"), nullable=False)
 
-# --- NOWOŚĆ: Tabela Zamówień ---
 class Zamowienie(Base):
     __tablename__ = "zamowienie"
-
     id_zamowienia = Column(Integer, primary_key=True, index=True)
     numer_zamowienia = Column(String(50), unique=True, nullable=False)
     data_zlozenia = Column(DateTime, nullable=False)
     status_zamowienia = Column(String(20), nullable=False)
     suma_calkowita = Column(Float, nullable=False)
     
-    # Klucz obcy do klienta
+    telefon_kontakt_do_zam = Column(String(9), nullable=True)
+    email_kontakt_do_zam = Column(String(40), nullable=True)
+
     id_klienta = Column(Integer, ForeignKey("klient.id_klienta"), nullable=False)
+    id_adresu = Column(Integer, ForeignKey("adres.id_adresu"), nullable=False)
+
+class PozycjaZamowienia(Base):
+    __tablename__ = "pozycja_zamowienia"
+    id_pozycji = Column(Integer, primary_key=True, index=True)
+    ilosc = Column(Integer, nullable=False)
+    cena_w_chwili_zakupu = Column(Float, nullable=False)
+    
+    id_modelu = Column(Integer, ForeignKey("model_produktu.id_modelu"), nullable=False)
+    id_zamowienia = Column(Integer, ForeignKey("zamowienie.id_zamowienia"), nullable=False)
+
+    model = relationship("ModelProduktu")
+
+class LogZmianaStatusu(Base):
+    __tablename__ = "log_zmiana_statusu"
+    id_logu = Column(Integer, primary_key=True, index=True)
+    stary_status = Column(Text)
+    nowy_status = Column(Text)
+    data_zmiany = Column(Date)
+    id_zamowienia = Column(Integer, ForeignKey("zamowienie.id_zamowienia"), nullable=False)
+    id_pracownika = Column(Integer, ForeignKey("pracownik.id_pracownika"), nullable=False)
 
 ====================
 PLIK: readme.txt
@@ -3333,6 +4826,7 @@ instalacja requirementsow: pip install -r requirements.txt
 
 uruchomienie: uvicorn main:app --reload
 
+Get-ChildItem -Recurse -File -Exclude "*.exe","*.jpg","*.png","*.pyc","*.git*","caly_projekt.txt" | Where-Object { $_.FullName -notmatch "venv|__pycache__|node_modules|.git" } | ForEach-Object { Add-Content -Path "caly_projekt.txt" -Value "`n====================`nPLIK: $($_.Name)`n===================="; Get-Content $_.FullName | Add-Content -Path "caly_projekt.txt" }
 
 ====================
 PLIK: requirements.txt

@@ -24,24 +24,28 @@
                 <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
                     <i class="fa-solid fa-user-check" style="color: green;"></i>
                 </a>
-                <a href="/logout" title="Wyloguj">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </a>
             {% else %}
                 <a href="login.html" title="Zaloguj się">
                     <i class="fa-solid fa-user"></i>
                 </a>
             {% endif %}
+
             <a href="koszyk.html" class="cart-link">
                 <i class="fa-solid fa-basket-shopping"></i>
                 <span class="cart-count">0</span>
             </a>
+
+            {% if user %}
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% endif %}
         </div>
     </header>
 
     <div class="layout-container">
         
-        <div class="categories">
+        <aside class="categories">
             <h3>Kategorie</h3>
             <ul>
                 <li>
@@ -65,13 +69,32 @@
                 <div class="filter-group">
                     <label>Cena (zł):</label>
                     <div class="price-inputs">
-                        <input type="number" id="price-min" placeholder="Od">
-                        <input type="number" id="price-max" placeholder="Do">
+                        <input type="number" id="price-min" placeholder="Od" 
+                               value="{{ price_min if price_min is not none else '' }}">
+                        <input type="number" id="price-max" placeholder="Do" 
+                               value="{{ price_max if price_max is not none else '' }}">
                     </div>
                 </div>
+                
+                <h4>Sortowanie</h4>
+                <div class="select-sort">
+                    <label for="sort-select"> Sortuj według: ...</label>
+                    <select id="sort-select">
+                        <option value="0">Domyślnie</option>
+                        <option value="1">Cena: Od najniższej</option>
+                        <option value="2">Cena: Od najwyższej</option>
+                        <option value="3">Nazwa: Alfabetycznie [A-Z]</option>
+                        <option value="4">Nazwa: Alfabetycznie [Z-A]</option>
+                    </select>
+                </div>
+                
                 <button id="apply-filters" class="btn-filter">Zastosuj</button>
+                
+                <div class="reset-container">
+                    <a href="#" id="reset-filters"><i class="fa-solid fa-xmark"></i> Wyczyść filtry</a>
+                </div>
             </div>
-        </div>
+        </aside>
 
         <main>
             <h1 class="section-title">
@@ -103,7 +126,7 @@
                 {% endfor %}
 
                 {% if not products %}
-                    <p style="padding: 20px;">Brak produktów w tej kategorii.</p>
+                    <p style="padding: 20px; width: 100%;">Brak produktów w tej kategorii.</p>
                 {% endif %}
             </section>
         </main>

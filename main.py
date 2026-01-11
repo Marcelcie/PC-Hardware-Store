@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from datetime import datetime
 from typing import Optional, List
+import json
 
 import models
 from database import engine, get_db
 
-# Tworzenie tabel
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -26,7 +26,8 @@ def get_current_user(request: Request, db: Session):
         return None
     return db.query(models.Klient).filter(models.Klient.id_klienta == user_id).first()
 
-# --- STRONA GŁÓWNA (Z FILTROWANIEM) ---
+# --- ENDPOINTY ---
+
 @app.get("/")
 @app.get("/index.html")
 def read_root(
@@ -34,30 +35,36 @@ def read_root(
     category_id: Optional[int] = None,
     price_min: Optional[float] = None, 
     price_max: Optional[float] = None,
-    search: Optional[str] = None,  # <--- NOWY PARAMETR
+    search: Optional[str] = None, 
+    sort: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     categories = db.query(models.Kategoria).all()
     query = db.query(models.ModelProduktu)
 
-    # 1. Filtr kategorii
     if category_id:
         query = query.filter(models.ModelProduktu.id_kategorii == category_id)
-    
-    # 2. Filtry ceny
     if price_min is not None:
         query = query.filter(models.ModelProduktu.cena_katalogowa >= price_min)
     if price_max is not None:
         query = query.filter(models.ModelProduktu.cena_katalogowa <= price_max)
-
-    # 3. WYSZUKIWANIE (NOWOŚĆ)
     if search:
-        # ilike = case insensitive search (np. %RTX% znajdzie "Karta RTX 4090")
         query = query.filter(models.ModelProduktu.nazwa_modelu.ilike(f"%{search}%"))
+
+    if sort == '1':
+        query = query.order_by(models.ModelProduktu.cena_katalogowa.asc())
+    elif sort == '2':
+        query = query.order_by(models.ModelProduktu.cena_katalogowa.desc())
+    elif sort == '3':
+        query = query.order_by(models.ModelProduktu.nazwa_modelu.asc())
+    elif sort == '4':
+        query = query.order_by(models.ModelProduktu.nazwa_modelu.desc())
+    else:
+        query = query.order_by(models.ModelProduktu.id_modelu.desc())
 
     products = query.all()
     user = get_current_user(request, db)
-    
+
     return templates.TemplateResponse("index.html", {
         "request": request, 
         "products": products,
@@ -66,72 +73,151 @@ def read_root(
         "current_category_id": category_id,
         "price_min": price_min,
         "price_max": price_max,
-        "search_query": search # <--- Przekazujemy wpisany tekst z powrotem do HTML
+        "search_query": search,
+        "current_sort": sort
     })
 
-# --- API DLA KOSZYKA (JS pyta o produkty) ---
 @app.post("/api/products-details")
 async def get_products_details(ids: List[int] = Body(...), db: Session = Depends(get_db)):
-    """Pobiera szczegóły produktów na podstawie listy ID z localStorage"""
     products = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu.in_(ids)).all()
-    
-    # Zwracamy czysty JSON dla JavaScriptu
-    return [
-        {
-            "id": p.id_modelu,
-            "name": p.nazwa_modelu,
-            "price": p.cena_katalogowa,
-            "image": p.zdjecie_url
-        }
-        for p in products
-    ]
+    return [{"id": p.id_modelu, "name": p.nazwa_modelu, "price": p.cena_katalogowa, "image": p.zdjecie_url} for p in products]
 
-# --- SKŁADANIE ZAMÓWIENIA (Z JSON) ---
-@app.post("/order/create")
-async def create_order(
-    request: Request, 
-    cart_data: List[dict] = Body(...), # Oczekujemy listy: [{id: 1, qty: 2}, ...]
+# --- NOWOŚĆ: Strona Podsumowania (Checkout) z autouzupełnianiem ---
+@app.get("/podsumowanie")
+def checkout_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login.html")
+    
+    # Szukamy adresu domyślnego w tabeli łączącej klient_adres
+    # 1. Znajdź wpis w klient_adres gdzie czy_domyslny = True dla tego klienta
+    klient_adres_entry = db.query(models.KlientAdres).filter(
+        models.KlientAdres.klient2id_klienta == user.id_klienta,
+        models.KlientAdres.czy_domyslny == True
+    ).first()
+
+    default_address = None
+    if klient_adres_entry:
+        # 2. Jeśli znaleziono, pobierz właściwy obiekt adresu
+        default_address = db.query(models.Adres).filter(
+            models.Adres.id_adresu == klient_adres_entry.adres2id_adresu
+        ).first()
+
+    return templates.TemplateResponse("podsumowanie.html", {
+        "request": request, 
+        "adres": default_address
+    })
+
+# --- NOWOŚĆ: Usuwanie adresu domyślnego (Dezaktywacja flagi) ---
+@app.post("/address/remove-default")
+def remove_default_address(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return JSONResponse(status_code=401, content={"message": "Zaloguj się"})
+    
+    # Znajdź obecny domyślny i usuń flagę
+    defaults = db.query(models.KlientAdres).filter(
+        models.KlientAdres.klient2id_klienta == user.id_klienta,
+        models.KlientAdres.czy_domyslny == True
+    ).all()
+    
+    for d in defaults:
+        d.czy_domyslny = False
+    
+    db.commit()
+    # Przeładuj stronę
+    return RedirectResponse(url="/podsumowanie", status_code=303)
+
+# --- NOWOŚĆ: Składanie zamówienia z formularza HTML ---
+@app.post("/order/submit")
+async def submit_order(
+    request: Request,
+    ulica: str = Form(...),
+    nr_domu: str = Form(...),
+    nr_lokalu: str = Form(None),
+    kod_pocztowy: str = Form(...),
+    miejscowosc: str = Form(...),
+    save_default: bool = Form(False), # Checkbox
+    cart_json: str = Form(...),       # Koszyk jako JSON string z ukrytego pola
     db: Session = Depends(get_db)
 ):
     user = get_current_user(request, db)
     if not user:
-        return JSONResponse(content={"error": "not_logged_in"}, status_code=401)
+        return RedirectResponse(url="/login.html", status_code=303)
+
+    try:
+        cart_data = json.loads(cart_json)
+    except:
+        return "Błąd danych koszyka"
 
     if not cart_data:
-        return JSONResponse(content={"error": "Koszyk jest pusty"}, status_code=400)
+        return "Koszyk pusty"
 
-    # 1. Oblicz sumę całkowitą (bezpiecznie po stronie serwera)
+    # 1. Tworzymy nowy adres w bazie dla tego zamówienia (bezpieczeństwo historii)
+    #    lub można szukać duplikatu, ale dla prostoty tworzymy nowy.
+    new_address = models.Adres(
+        ulica=ulica,
+        nr_domu=nr_domu,
+        nr_lokalu=nr_lokalu,
+        kod_pocztowy=kod_pocztowy,
+        miejscowosc=miejscowosc
+    )
+    db.add(new_address)
+    db.flush() # Żeby dostać ID adresu
+
+    # 2. Obsługa adresu domyślnego
+    # Jeśli użytkownik chce zapisać jako domyślny, musimy powiązać ten adres z klientem
+    if save_default:
+        # Najpierw "odznaczamy" poprzedni domyślny adres
+        existing_defaults = db.query(models.KlientAdres).filter(
+            models.KlientAdres.klient2id_klienta == user.id_klienta,
+            models.KlientAdres.czy_domyslny == True
+        ).all()
+        for ka in existing_defaults:
+            ka.czy_domyslny = False
+        
+        # Tworzymy nowe powiązanie w klient_adres
+        new_link = models.KlientAdres(
+            klient2id_klienta=user.id_klienta,
+            adres2id_adresu=new_address.id_adresu,
+            czy_domyslny=True
+        )
+        db.add(new_link)
+    
+    # Możemy też dodać powiązanie bez "czy_domyslny", żeby klient miał historię adresów,
+    # ale skupmy się na wymaganiu.
+
+    # 3. Obliczamy sumę
     total_price = 0.0
-    order_items = []
+    order_items_objs = []
 
     for item in cart_data:
-        product_id = item.get('id')
-        qty = item.get('qty')
-        
-        product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == product_id).first()
+        p_id = int(item['id'])
+        qty = int(item['qty'])
+        product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == p_id).first()
         if product:
             total_price += product.cena_katalogowa * qty
-            order_items.append({
+            order_items_objs.append({
                 "product": product,
                 "qty": qty,
                 "price": product.cena_katalogowa
             })
 
-    # 2. Utwórz zamówienie w bazie
+    # 4. Tworzymy zamówienie
     new_order = models.Zamowienie(
         numer_zamowienia=f"ORD-{int(datetime.now().timestamp())}",
         data_zlozenia=datetime.now(),
         status_zamowienia="Nowe",
         suma_calkowita=total_price,
         id_klienta=user.id_klienta,
-        id_adresu=1
-        # id_adresu=1 # Zakładamy, że masz adres testowy w bazie (np. ID 1)
+        id_adresu=new_address.id_adresu,
+        email_kontakt_do_zam=user.adres_email
     )
     db.add(new_order)
-    db.flush() # Generuje ID zamówienia
+    db.flush()
 
-    # 3. Zapisz pozycje zamówienia
-    for item in order_items:
+    # 5. Pozycje zamówienia
+    for item in order_items_objs:
         pos = models.PozycjaZamowienia(
             ilosc=item["qty"],
             cena_w_chwili_zakupu=item["price"],
@@ -139,14 +225,47 @@ async def create_order(
             id_zamowienia=new_order.id_zamowienia
         )
         db.add(pos)
-        # Odejmij ze stanu magazynowego (opcjonalne, jeśli masz trigger w bazie)
-        # item["product"].stan_magazynowy -= item["qty"]
+        # Opcjonalnie: zmniejsz stan magazynowy
+        item["product"].stan_magazynowy -= item["qty"]
 
     db.commit()
-    return JSONResponse(content={"message": "Zamówienie złożone!", "order_id": new_order.id_zamowienia})
+
+    # Przekierowanie do szczegółów tego zamówienia + czyszczenie koszyka (frontend musi wyczyścić po redirectcie,
+    # ale tutaj robimy proste przekierowanie. JS na stronie sukcesu może wyczyścić localStorage).
+    # Prostszą metodą jest przekierowanie do strony z parametrem ?clear_cart=1
+    return RedirectResponse(url=f"/zamowienie/{new_order.id_zamowienia}?clear_cart=1", status_code=303)
 
 
-# --- POZOSTAŁE ROUTINGI (Bez zmian) ---
+@app.get("/zamowienie/{order_id}")
+def order_details(request: Request, order_id: int, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login.html")
+    
+    order = db.query(models.Zamowienie).filter(
+        models.Zamowienie.id_zamowienia == order_id,
+        models.Zamowienie.id_klienta == user.id_klienta
+    ).first()
+    
+    if not order:
+        return "Nie znaleziono zamówienia."
+    
+    # Pobierz adres powiązany z zamówieniem
+    adres = db.query(models.Adres).filter(models.Adres.id_adresu == order.id_adresu).first()
+
+    items = db.query(models.PozycjaZamowienia).filter(
+        models.PozycjaZamowienia.id_zamowienia == order_id
+    ).all()
+    
+    return templates.TemplateResponse("szczegoly_zamowienia.html", {
+        "request": request, 
+        "order": order, 
+        "items": items,
+        "adres": adres,
+        "user": user
+    })
+
+# --- POZOSTAŁE (Login, Register, itp) ---
 @app.get("/login.html")
 def login_page(request: Request): return templates.TemplateResponse("login.html", {"request": request})
 
@@ -183,7 +302,6 @@ def account_page(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/koszyk.html")
 def cart_page(request: Request, db: Session = Depends(get_db)):
-    # Koszyk jest dostępny dla wszystkich, dane ładuje JavaScript z localStorage
     user = get_current_user(request, db)
     return templates.TemplateResponse("koszyk.html", {"request": request, "user": user})
 

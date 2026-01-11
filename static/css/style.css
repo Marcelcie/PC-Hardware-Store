@@ -1169,6 +1169,23 @@ footer .footer-bottom {
   margin-bottom: 15px;
 }
 
+.select-sort {
+  margin-bottom: 15px;
+}
+
+.select-sort select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.select-sort label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
 .filter-group label {
   display: block;
   font-size: 14px;
@@ -1213,4 +1230,155 @@ footer .footer-bottom {
 .filter-select:focus {
   border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
-}/*# sourceMappingURL=style.css.map */
+}
+
+/* --- PODSUMOWANIE ZAMÓWIENIA (CHECKOUT) --- */
+.checkout-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.checkout-left {
+  flex: 2;
+}
+
+.checkout-right {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+/* Karta adresu domyślnego */
+.default-address-card {
+  background: #f9f9f9;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.default-address-card h3 {
+  margin-bottom: 10px;
+  color: #007bff;
+  font-size: 18px;
+}
+
+.default-address-card p {
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.address-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  background: #fff;
+  transition: 0.2s;
+}
+
+.btn-small:hover {
+  background: #eee;
+}
+
+.btn-small.delete {
+  color: red;
+  border-color: #ffcccc;
+}
+
+.btn-small.delete:hover {
+  background: #ffe6e6;
+}
+
+.separator-text {
+  text-align: center;
+  margin: 20px 0;
+  font-weight: bold;
+  color: #999;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.btn-toggle-form {
+  width: 100%;
+  padding: 10px;
+  background-color: #fff;
+  border: 2px dashed #aaa;
+  color: #555;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: 0.2s;
+}
+
+.btn-toggle-form:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background-color: #f0f8ff;
+}
+
+/* Mini koszyk po prawej */
+.mini-cart-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.mini-cart-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.mini-cart-info {
+  flex: 1;
+}
+
+.mini-cart-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.mini-cart-meta {
+  font-size: 12px;
+  color: #777;
+}
+
+.mini-cart-total {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 2px solid #333;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .checkout-layout {
+    flex-direction: column-reverse; /* Koszyk na górę lub dół w zależności od preferencji */
+  }
+  .checkout-right {
+    width: 100%;
+    position: static;
+  }
+}

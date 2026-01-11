@@ -183,36 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 4. SKŁADANIE ZAMÓWIENIA ---
+    // --- 4. PRZEKIEROWANIE DO PODSUMOWANIA ---
     const checkoutBtn = document.querySelector('.checkout-btn');
     if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', async () => {
+        checkoutBtn.addEventListener('click', () => {
             const cart = getCart();
-            if (cart.length === 0) return;
-
-            try {
-                const response = await fetch('/order/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(cart)
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.removeItem('myShopCart'); // Wyczyść koszyk
-                    updateBadge();
-                    window.location.href = "/konto.html"; // Przekieruj do zamówień
-                } else {
-                    if (response.status === 401) {
-                        alert("Musisz się zalogować, aby złożyć zamówienie!");
-                        window.location.href = "/login.html";
-                    } else {
-                        alert("Wystąpił błąd podczas składania zamówienia.");
-                    }
-                }
-            } catch (error) {
-                console.error(error);
+            if (cart.length === 0) {
+                alert("Twój koszyk jest pusty!");
+                return;
             }
+            // Zamiast wysyłać od razu POST, idziemy do formularza wyboru adresu
+            window.location.href = "/podsumowanie";
         });
     }
 
@@ -234,44 +215,98 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { toast.remove(); }, 3000);
     };
     
-    // --- 7. FILTRY (PRZYCISK) ---
+    // --- 7. FILTRY, SZUKANIE I SORTOWANIE (ZINTEGROWANE) ---
+    
+    // Elementy DOM
     const applyFiltersBtn = document.getElementById('apply-filters');
-    if (applyFiltersBtn) {
-        applyFiltersBtn.addEventListener('click', () => {
-            const min = document.getElementById('price-min').value;
-            const max = document.getElementById('price-max').value;
-            
-            // Pobieramy obecne parametry URL (żeby nie zgubić kategorii)
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            if (min) urlParams.set('price_min', min);
-            else urlParams.delete('price_min');
-            
-            if (max) urlParams.set('price_max', max);
-            else urlParams.delete('price_max');
-            
-            window.location.search = urlParams.toString();
-        });
-    }
-// ... reszta Twojego kodu ...
-
-    // --- 8. WYSZUKIWANIE PRODUKTÓW ---
+    const resetFiltersBtn = document.getElementById('reset-filters');
+    const sortSelect = document.getElementById('sort-select');
     const searchInput = document.querySelector('.search-bar input');
     const searchBtn = document.querySelector('.search-bar .search-btn');
 
+    // A. USTAWIENIE STANU POCZĄTKOWEGO (Po przeładowaniu)
+    // Jeśli w URL jest ?sort=2, ustawiamy select na 2, żeby użytkownik widział co wybrał
+    if (sortSelect) {
+        const params = new URLSearchParams(window.location.search);
+        const currentSort = params.get('sort');
+        if (currentSort) {
+            sortSelect.value = currentSort;
+        }
+    }
+
+    // B. FUNKCJA APLIKUJĄCA WSZYSTKIE FILTRY (Cena + Sortowanie + Szukanie + Kategoria)
+    function applyAllFilters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 1. Ceny
+        const min = document.getElementById('price-min').value;
+        const max = document.getElementById('price-max').value;
+
+        if (min) urlParams.set('price_min', min);
+        else urlParams.delete('price_min');
+
+        if (max) urlParams.set('price_max', max);
+        else urlParams.delete('price_max');
+
+        // 2. Sortowanie
+        if (sortSelect) {
+            const sortVal = sortSelect.value;
+            if (sortVal !== "0") urlParams.set('sort', sortVal);
+            else urlParams.delete('sort');
+        }
+
+        // 3. Wyszukiwanie (jeśli jest wpisane w headerze)
+        if (searchInput && searchInput.value.trim() !== "") {
+            urlParams.set('search', searchInput.value.trim());
+        }
+
+        // (Kategoria jest już w urlParams, jeśli tam była, więc jej nie ruszamy)
+
+        // Przeładowanie strony z nowymi parametrami
+        window.location.search = urlParams.toString();
+    }
+
+    // C. OBSŁUGA GUZIKA "ZASTOSUJ"
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            applyAllFilters();
+        });
+    }
+
+    // D. OBSŁUGA GUZIKA "WYCZYŚĆ FILTRY" (Czerwony tekst)
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Usuwamy tylko filtry cenowe i sortowanie
+            // Zostawiamy kategorię (żeby nie wyrzucało do "Wszystkie") i szukanie
+            urlParams.delete('price_min');
+            urlParams.delete('price_max');
+            urlParams.delete('sort');
+            
+            // Jeśli chcesz czyścić też szukanie, odkomentuj linię poniżej:
+            // urlParams.delete('search');
+
+            window.location.search = urlParams.toString();
+        });
+    }
+
+    // E. OBSŁUGA WYSZUKIWANIA (Enter lub Klik)
     function performSearch() {
         const query = searchInput.value.trim();
         const urlParams = new URLSearchParams(window.location.search);
-
+        
         if (query) {
-            // Ustaw parametr ?search=...
             urlParams.set('search', query);
         } else {
-            // Jeśli puste, usuń parametr search
             urlParams.delete('search');
         }
-
-        // Przeładuj stronę z nowym adresem
+        
+        // Zazwyczaj przy nowym wyszukiwaniu resetuje się filtry ceny, 
+        // ale w tym rozwiązaniu zostawiamy je, aby można było szukać w przedziale cenowym.
+        
         window.location.search = urlParams.toString();
     }
 
@@ -286,6 +321,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-// Tu kończy się Twój document.addEventListener
 });
