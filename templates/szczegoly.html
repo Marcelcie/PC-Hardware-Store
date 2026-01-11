@@ -78,11 +78,11 @@
             <div class="purchase-section">
                     <div class="qty-control">
                         <button class="qty-minus">-</button>
-                        <input type="number" class="qty-input" value="1" min="1">
+                        <input type="number" class="qty-input" value="1" min="1" max="{{ product.stan_magazynowy }}">
                         <button class="qty-plus">+</button>
                     </div>
                 {% if product.stan_magazynowy > 0 %}
-                    <button class="add-to-cart-big">
+                    <button class="add-to-cart-big" data-stock="{{ product.stan_magazynowy }}">
                         <i class="fa-solid fa-cart-shopping"></i> DODAJ DO KOSZYKA
                     </button>
                 {% else %}

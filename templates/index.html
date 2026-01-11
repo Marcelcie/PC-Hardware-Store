@@ -120,7 +120,16 @@
                     </a>
                     <div class="product-footer">
                         <div class="price">{{ product.cena_katalogowa }} zł</div>
-                        <button class="cart-btn"><i class="fa-solid fa-cart-plus"></i></button>
+                        
+                        {% if product.stan_magazynowy > 0 %}
+                            <button class="cart-btn" data-stock="{{ product.stan_magazynowy }}">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        {% else %}
+                            <button class="cart-btn" disabled style="background-color: #ccc; cursor: not-allowed;" title="Produkt wyprzedany">
+                                <i class="fa-solid fa-ban"></i>
+                            </button>
+                        {% endif %}
                     </div>
                 </article>
                 {% endfor %}

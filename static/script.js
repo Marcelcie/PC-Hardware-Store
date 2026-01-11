@@ -5,29 +5,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- 1. ZARZĄDZANIE KOSZYKIEM (LOCAL STORAGE) ---
     
-    // Pobierz koszyk z pamięci przeglądarki
     function getCart() {
         return JSON.parse(localStorage.getItem('myShopCart')) || [];
     }
 
-    // Zapisz koszyk do pamięci
     function saveCart(cart) {
         localStorage.setItem('myShopCart', JSON.stringify(cart));
         updateBadge();
     }
 
-    // Aktualizuj licznik w nagłówku
     function updateBadge() {
         const cart = getCart();
         const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
         if (cartCountElement) cartCountElement.innerText = totalQty;
     }
 
-    // Dodaj produkt
-    function addToCart(id, qty = 1) {
+    // Funkcja dodawania do koszyka ze sprawdzaniem stanu magazynowego
+    function addToCart(id, qty = 1, maxStock = 9999) {
         let cart = getCart();
         const existingItem = cart.find(item => item.id === id);
         
+        let currentQty = existingItem ? existingItem.qty : 0;
+        
+        // Sprawdzamy dostępność (czy nowa ilość nie przekroczy stanu)
+        if (currentQty + qty > maxStock) {
+            window.showToast(`Mamy tylko ${maxStock} szt. tego produktu! Masz już ${currentQty} w koszyku.`);
+            return;
+        }
+
         if (existingItem) {
             existingItem.qty += qty;
         } else {
@@ -39,35 +44,37 @@ document.addEventListener('DOMContentLoaded', () => {
         window.showToast("Dodano produkt do koszyka!");
     }
 
-    // --- 2. OBSŁUGA PRZYCISKÓW NA STRONIE (WSZYSTKICH) ---
-    
-    // Guziki "Dodaj do koszyka" na liście produktów (index.html)
+    // --- 2. OBSŁUGA PRZYCISKÓW NA STRONIE GŁÓWNEJ (LISTA PRODUKTÓW) ---
     document.querySelectorAll('.cart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            e.preventDefault(); // Żeby nie wchodziło w link szczegółów
-            // Szukamy ID w linku rodzica lub atrybucie
+            e.preventDefault(); 
             const card = btn.closest('.product-card');
-            const link = card.querySelector('.card-link').getAttribute('href'); // np. "szczegoly.html?id=5"
+            const link = card.querySelector('.card-link').getAttribute('href'); 
             const id = parseInt(link.split('=')[1]);
-            
-            addToCart(id, 1);
+            const stock = parseInt(btn.getAttribute('data-stock')) || 9999; 
+
+            addToCart(id, 1, stock);
         });
     });
 
-    // Guzik "Dodaj do koszyka" na stronie szczegółów (szczegoly.html)
+    // --- OBSŁUGA PRZYCISKU "DODAJ DO KOSZYKA" NA STRONIE SZCZEGÓŁÓW ---
     const btnAddBig = document.querySelector('.add-to-cart-big');
     if (btnAddBig) {
         btnAddBig.addEventListener('click', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const id = parseInt(urlParams.get('id'));
-            const qtyInput = document.querySelector('.qty-input');
+            
+            // Pobieramy ilość wpisaną w input
+            const qtyInput = document.querySelector('.purchase-section .qty-input');
             const qty = parseInt(qtyInput.value) || 1;
             
-            addToCart(id, qty);
+            const stock = parseInt(btnAddBig.getAttribute('data-stock')) || 9999;
+            
+            addToCart(id, qty, stock);
         });
     }
 
-    // --- 3. LOGIKA STRONY KOSZYKA (koszyk.html) ---
+    // --- 3. LOGIKA STRONY KOSZYKA (Tabela) ---
     const cartTableBody = document.querySelector('.cart-table tbody');
     if (cartTableBody) {
         renderCartPage();
@@ -84,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Pobierz szczegóły produktów z backendu (Python)
         const ids = cart.map(item => item.id);
         
         try {
@@ -95,31 +101,34 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const products = await response.json();
 
-            // Generuj HTML tabeli
             cartTableBody.innerHTML = '';
             let totalSum = 0;
 
             cart.forEach(cartItem => {
                 const product = products.find(p => p.id === cartItem.id);
-                if (!product) return; // Produkt mógł zostać usunięty z bazy
+                if (!product) return; 
 
                 const subtotal = product.price * cartItem.qty;
                 totalSum += subtotal;
 
+                const isMaxed = cartItem.qty >= product.stock;
+                const plusDisabled = isMaxed ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
+
                 const row = `
-                    <tr data-id="${cartItem.id}">
+                    <tr data-id="${cartItem.id}" data-stock="${product.stock}">
                         <td class="product-img">
                             <img src="${product.image || 'https://placehold.co/80x60'}" width="80">
                         </td>
                         <td class="product-name">
                             <a href="szczegoly.html?id=${product.id}">${product.name}</a>
+                            ${isMaxed ? '<div style="color: red; font-size: 11px;">Max dostępna ilość</div>' : ''}
                         </td>
                         <td class="product-price">${product.price} zł</td>
                         <td class="product-qty">
                             <div class="qty-control">
                                 <button class="qty-minus">-</button>
                                 <input type="number" class="qty-input" value="${cartItem.qty}" readonly>
-                                <button class="qty-plus">+</button>
+                                <button class="qty-plus" ${plusDisabled}>+</button>
                             </div>
                         </td>
                         <td class="product-subtotal">${subtotal.toFixed(2)} zł</td>
@@ -134,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.summary-subtotal').innerText = totalSum.toFixed(2) + ' zł';
             document.querySelector('.summary-total span:last-child').innerText = totalSum.toFixed(2) + ' zł';
 
-            // Obsługa guzików wewnątrz koszyka (+, -, usuń)
             attachCartEvents();
 
         } catch (error) {
@@ -143,35 +151,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function attachCartEvents() {
-        // Minus
-        document.querySelectorAll('.qty-minus').forEach(btn => {
+        // Obsługa guzików wewnątrz tabeli koszyka
+        document.querySelectorAll('.cart-table .qty-minus').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = parseInt(e.target.closest('tr').dataset.id);
+                const row = e.target.closest('tr');
+                const id = parseInt(row.dataset.id);
                 let cart = getCart();
                 const item = cart.find(i => i.id === id);
                 if (item && item.qty > 1) {
                     item.qty--;
                     saveCart(cart);
-                    renderCartPage(); // Odśwież widok
+                    renderCartPage(); 
                 }
             });
         });
 
-        // Plus
-        document.querySelectorAll('.qty-plus').forEach(btn => {
+        document.querySelectorAll('.cart-table .qty-plus').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = parseInt(e.target.closest('tr').dataset.id);
+                const row = e.target.closest('tr');
+                const id = parseInt(row.dataset.id);
+                const stock = parseInt(row.dataset.stock); 
+                
                 let cart = getCart();
                 const item = cart.find(i => i.id === id);
+                
                 if (item) {
-                    item.qty++;
-                    saveCart(cart);
-                    renderCartPage();
+                    if (item.qty < stock) {
+                        item.qty++;
+                        saveCart(cart);
+                        renderCartPage();
+                    } else {
+                        window.showToast("Osiągnięto limit magazynowy!");
+                    }
                 }
             });
         });
 
-        // Usuń
         document.querySelectorAll('.btn-remove').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = parseInt(e.target.closest('tr').dataset.id);
@@ -192,13 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Twój koszyk jest pusty!");
                 return;
             }
-            // Zamiast wysyłać od razu POST, idziemy do formularza wyboru adresu
             window.location.href = "/podsumowanie";
         });
     }
 
     // --- 5. INITIALIZACJA ---
-    updateBadge(); // Uruchom przy starcie każdej strony
+    updateBadge(); 
 
     // --- 6. TOASTY ---
     window.showToast = function(msg) {
@@ -215,17 +229,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { toast.remove(); }, 3000);
     };
     
-    // --- 7. FILTRY, SZUKANIE I SORTOWANIE (ZINTEGROWANE) ---
-    
-    // Elementy DOM
+    // --- 7. FILTRY, SZUKANIE I SORTOWANIE ---
     const applyFiltersBtn = document.getElementById('apply-filters');
     const resetFiltersBtn = document.getElementById('reset-filters');
     const sortSelect = document.getElementById('sort-select');
     const searchInput = document.querySelector('.search-bar input');
     const searchBtn = document.querySelector('.search-bar .search-btn');
 
-    // A. USTAWIENIE STANU POCZĄTKOWEGO (Po przeładowaniu)
-    // Jeśli w URL jest ?sort=2, ustawiamy select na 2, żeby użytkownik widział co wybrał
     if (sortSelect) {
         const params = new URLSearchParams(window.location.search);
         const currentSort = params.get('sort');
@@ -234,11 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // B. FUNKCJA APLIKUJĄCA WSZYSTKIE FILTRY (Cena + Sortowanie + Szukanie + Kategoria)
     function applyAllFilters() {
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. Ceny
         const min = document.getElementById('price-min').value;
         const max = document.getElementById('price-max').value;
 
@@ -248,25 +256,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (max) urlParams.set('price_max', max);
         else urlParams.delete('price_max');
 
-        // 2. Sortowanie
         if (sortSelect) {
             const sortVal = sortSelect.value;
             if (sortVal !== "0") urlParams.set('sort', sortVal);
             else urlParams.delete('sort');
         }
 
-        // 3. Wyszukiwanie (jeśli jest wpisane w headerze)
         if (searchInput && searchInput.value.trim() !== "") {
             urlParams.set('search', searchInput.value.trim());
         }
 
-        // (Kategoria jest już w urlParams, jeśli tam była, więc jej nie ruszamy)
-
-        // Przeładowanie strony z nowymi parametrami
         window.location.search = urlParams.toString();
     }
 
-    // C. OBSŁUGA GUZIKA "ZASTOSUJ"
     if (applyFiltersBtn) {
         applyFiltersBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -274,26 +276,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // D. OBSŁUGA GUZIKA "WYCZYŚĆ FILTRY" (Czerwony tekst)
     if (resetFiltersBtn) {
         resetFiltersBtn.addEventListener('click', (e) => {
             e.preventDefault();
             const urlParams = new URLSearchParams(window.location.search);
-            
-            // Usuwamy tylko filtry cenowe i sortowanie
-            // Zostawiamy kategorię (żeby nie wyrzucało do "Wszystkie") i szukanie
             urlParams.delete('price_min');
             urlParams.delete('price_max');
             urlParams.delete('sort');
-            
-            // Jeśli chcesz czyścić też szukanie, odkomentuj linię poniżej:
-            // urlParams.delete('search');
-
             window.location.search = urlParams.toString();
         });
     }
 
-    // E. OBSŁUGA WYSZUKIWANIA (Enter lub Klik)
     function performSearch() {
         const query = searchInput.value.trim();
         const urlParams = new URLSearchParams(window.location.search);
@@ -303,9 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             urlParams.delete('search');
         }
-        
-        // Zazwyczaj przy nowym wyszukiwaniu resetuje się filtry ceny, 
-        // ale w tym rozwiązaniu zostawiamy je, aby można było szukać w przedziale cenowym.
         
         window.location.search = urlParams.toString();
     }
@@ -318,6 +308,35 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 performSearch();
+            }
+        });
+    }
+
+    // --- 10. OBSŁUGA ILOŚCI NA STRONIE SZCZEGÓŁÓW (NOWOŚĆ) ---
+    // Ten kod działa TYLKO na stronie szczegoly.html, gdzie jest .purchase-section
+    const detailQtyControl = document.querySelector('.purchase-section .qty-control');
+    if (detailQtyControl) {
+        const input = detailQtyControl.querySelector('.qty-input');
+        const btnMinus = detailQtyControl.querySelector('.qty-minus');
+        const btnPlus = detailQtyControl.querySelector('.qty-plus');
+        
+        // Pobieramy maksymalny stan z atrybutu max inputa (został tam wstawiony przez Jinja2)
+        // lub z przycisku dodawania (jeśli input nie ma max)
+        const maxStock = parseInt(input.getAttribute('max')) || 9999;
+
+        btnMinus.addEventListener('click', () => {
+            let val = parseInt(input.value);
+            if (val > 1) {
+                input.value = val - 1;
+            }
+        });
+
+        btnPlus.addEventListener('click', () => {
+            let val = parseInt(input.value);
+            if (val < maxStock) {
+                input.value = val + 1;
+            } else {
+                window.showToast("Maksymalna dostępna ilość!");
             }
         });
     }

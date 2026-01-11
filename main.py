@@ -80,7 +80,17 @@ def read_root(
 @app.post("/api/products-details")
 async def get_products_details(ids: List[int] = Body(...), db: Session = Depends(get_db)):
     products = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu.in_(ids)).all()
-    return [{"id": p.id_modelu, "name": p.nazwa_modelu, "price": p.cena_katalogowa, "image": p.zdjecie_url} for p in products]
+    # ZMIANA: Dodano "stock": p.stan_magazynowy
+    return [
+        {
+            "id": p.id_modelu, 
+            "name": p.nazwa_modelu, 
+            "price": p.cena_katalogowa, 
+            "image": p.zdjecie_url,
+            "stock": p.stan_magazynowy 
+        } 
+        for p in products
+    ]
 
 # --- NOWOŚĆ: Strona Podsumowania (Checkout) z autouzupełnianiem ---
 @app.get("/podsumowanie")
@@ -89,8 +99,6 @@ def checkout_page(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse(url="/login.html")
     
-    # Szukamy adresu domyślnego w tabeli łączącej klient_adres
-    # 1. Znajdź wpis w klient_adres gdzie czy_domyslny = True dla tego klienta
     klient_adres_entry = db.query(models.KlientAdres).filter(
         models.KlientAdres.klient2id_klienta == user.id_klienta,
         models.KlientAdres.czy_domyslny == True
@@ -98,7 +106,6 @@ def checkout_page(request: Request, db: Session = Depends(get_db)):
 
     default_address = None
     if klient_adres_entry:
-        # 2. Jeśli znaleziono, pobierz właściwy obiekt adresu
         default_address = db.query(models.Adres).filter(
             models.Adres.id_adresu == klient_adres_entry.adres2id_adresu
         ).first()
@@ -115,7 +122,6 @@ def remove_default_address(request: Request, db: Session = Depends(get_db)):
     if not user:
         return JSONResponse(status_code=401, content={"message": "Zaloguj się"})
     
-    # Znajdź obecny domyślny i usuń flagę
     defaults = db.query(models.KlientAdres).filter(
         models.KlientAdres.klient2id_klienta == user.id_klienta,
         models.KlientAdres.czy_domyslny == True
@@ -125,7 +131,6 @@ def remove_default_address(request: Request, db: Session = Depends(get_db)):
         d.czy_domyslny = False
     
     db.commit()
-    # Przeładuj stronę
     return RedirectResponse(url="/podsumowanie", status_code=303)
 
 # --- NOWOŚĆ: Składanie zamówienia z formularza HTML ---
@@ -137,8 +142,8 @@ async def submit_order(
     nr_lokalu: str = Form(None),
     kod_pocztowy: str = Form(...),
     miejscowosc: str = Form(...),
-    save_default: bool = Form(False), # Checkbox
-    cart_json: str = Form(...),       # Koszyk jako JSON string z ukrytego pola
+    save_default: bool = Form(False), 
+    cart_json: str = Form(...),       
     db: Session = Depends(get_db)
 ):
     user = get_current_user(request, db)
@@ -153,8 +158,6 @@ async def submit_order(
     if not cart_data:
         return "Koszyk pusty"
 
-    # 1. Tworzymy nowy adres w bazie dla tego zamówienia (bezpieczeństwo historii)
-    #    lub można szukać duplikatu, ale dla prostoty tworzymy nowy.
     new_address = models.Adres(
         ulica=ulica,
         nr_domu=nr_domu,
@@ -163,12 +166,9 @@ async def submit_order(
         miejscowosc=miejscowosc
     )
     db.add(new_address)
-    db.flush() # Żeby dostać ID adresu
+    db.flush() 
 
-    # 2. Obsługa adresu domyślnego
-    # Jeśli użytkownik chce zapisać jako domyślny, musimy powiązać ten adres z klientem
     if save_default:
-        # Najpierw "odznaczamy" poprzedni domyślny adres
         existing_defaults = db.query(models.KlientAdres).filter(
             models.KlientAdres.klient2id_klienta == user.id_klienta,
             models.KlientAdres.czy_domyslny == True
@@ -176,7 +176,6 @@ async def submit_order(
         for ka in existing_defaults:
             ka.czy_domyslny = False
         
-        # Tworzymy nowe powiązanie w klient_adres
         new_link = models.KlientAdres(
             klient2id_klienta=user.id_klienta,
             adres2id_adresu=new_address.id_adresu,
@@ -184,10 +183,6 @@ async def submit_order(
         )
         db.add(new_link)
     
-    # Możemy też dodać powiązanie bez "czy_domyslny", żeby klient miał historię adresów,
-    # ale skupmy się na wymaganiu.
-
-    # 3. Obliczamy sumę
     total_price = 0.0
     order_items_objs = []
 
@@ -195,15 +190,25 @@ async def submit_order(
         p_id = int(item['id'])
         qty = int(item['qty'])
         product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == p_id).first()
+        
+        # ZMIANA: Dodatkowa weryfikacja stanu magazynowego po stronie serwera
         if product:
-            total_price += product.cena_katalogowa * qty
-            order_items_objs.append({
-                "product": product,
-                "qty": qty,
-                "price": product.cena_katalogowa
-            })
+            if product.stan_magazynowy < qty:
+                # Tutaj można obsłużyć błąd ładniej, ale dla uproszczenia rzucamy alert/error
+                # W praktyce JS nie pozwoli na to, ale API musi być bezpieczne
+                qty = product.stan_magazynowy # Kupujemy max co jest
+            
+            if qty > 0:
+                total_price += product.cena_katalogowa * qty
+                order_items_objs.append({
+                    "product": product,
+                    "qty": qty,
+                    "price": product.cena_katalogowa
+                })
 
-    # 4. Tworzymy zamówienie
+    if not order_items_objs:
+        return "Nie można zrealizować zamówienia (brak towaru)."
+
     new_order = models.Zamowienie(
         numer_zamowienia=f"ORD-{int(datetime.now().timestamp())}",
         data_zlozenia=datetime.now(),
@@ -216,7 +221,6 @@ async def submit_order(
     db.add(new_order)
     db.flush()
 
-    # 5. Pozycje zamówienia
     for item in order_items_objs:
         pos = models.PozycjaZamowienia(
             ilosc=item["qty"],
@@ -225,14 +229,11 @@ async def submit_order(
             id_zamowienia=new_order.id_zamowienia
         )
         db.add(pos)
-        # Opcjonalnie: zmniejsz stan magazynowy
+        # ZMIANA: Aktualizacja stanu magazynowego
         item["product"].stan_magazynowy -= item["qty"]
 
     db.commit()
 
-    # Przekierowanie do szczegółów tego zamówienia + czyszczenie koszyka (frontend musi wyczyścić po redirectcie,
-    # ale tutaj robimy proste przekierowanie. JS na stronie sukcesu może wyczyścić localStorage).
-    # Prostszą metodą jest przekierowanie do strony z parametrem ?clear_cart=1
     return RedirectResponse(url=f"/zamowienie/{new_order.id_zamowienia}?clear_cart=1", status_code=303)
 
 
@@ -250,7 +251,6 @@ def order_details(request: Request, order_id: int, db: Session = Depends(get_db)
     if not order:
         return "Nie znaleziono zamówienia."
     
-    # Pobierz adres powiązany z zamówieniem
     adres = db.query(models.Adres).filter(models.Adres.id_adresu == order.id_adresu).first()
 
     items = db.query(models.PozycjaZamowienia).filter(
@@ -265,7 +265,6 @@ def order_details(request: Request, order_id: int, db: Session = Depends(get_db)
         "user": user
     })
 
-# --- POZOSTAŁE (Login, Register, itp) ---
 @app.get("/login.html")
 def login_page(request: Request): return templates.TemplateResponse("login.html", {"request": request})
 
