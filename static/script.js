@@ -2,7 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ZMIENNE ---
     const cartCountElement = document.querySelector('.cart-count');
     const backToTopBtn = document.getElementById('back-to-top');
-    
+    const modal = document.getElementById('product-modal');
+    const openBtn = document.getElementById('open-product-modal');
+    const closeBtn = document.querySelector('.close-modal');
+
     // --- 1. ZARZĄDZANIE KOSZYKIEM (LOCAL STORAGE) ---
     
     function getCart() {
@@ -339,5 +342,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.showToast("Maksymalna dostępna ilość!");
             }
         });
+    }
+});
+
+// Ozywienie okna w panelu administratora
+
+if (openBtn) {
+    openBtn.addEventListener('click', () => {
+        modal.classList.add('active'); 
+    });
+}
+
+
+if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+}
+
+
+window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.classList.remove('active');
     }
 });

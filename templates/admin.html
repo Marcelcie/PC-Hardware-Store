@@ -15,13 +15,12 @@
             <div class="sidebar-header">
                 <i class="fa-solid fa-user-shield"></i>
                 <span>Admin Panel</span>
-                <button id="close-sidebar" class="mobile-only"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <nav class="sidebar-nav">
                 <a href="/admin" class="active"><i class="fa-solid fa-box-open"></i> Produkty</a>
-                <a href="#"><i class="fa-solid fa-users"></i> Użytkownicy</a>
-                <a href="#"><i class="fa-solid fa-chart-line"></i> Raporty</a>
+                <a href="#"><i class="fa-solid fa-users"></i> ### in process</a>
+                <a href="#"><i class="fa-solid fa-chart-line"></i> ### in process</a>
                 <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Powrót do Sklepu</a>
                 
                 <div class="divider"></div>
@@ -32,13 +31,34 @@
         <main class="main-content">
             
             <header class="dashboard-topbar">
-                <button id="sidebar-toggle" class="sidebar-toggle"><i class="fa-solid fa-bars"></i></button>
                 <h1>Zarządzanie Produktami</h1>
                 <div class="user-avatar">
                     <img src="https://ui-avatars.com/api/?name=Admin&background=dc3545&color=fff" alt="Admin">
                 </div>
             </header>
+                <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div class="stat-info">
+                        <h3>Produkty</h3>
+                        <p>{{ products|length }}</p>
+                    </div>
+                </div> <div class="stat-card">
+                    <div class="stat-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="stat-info">
+                        <h3>Niski stan</h3>
+                        <p>{{ low_stock_count|default('0') }}</p>
+                    </div>
+                </div>
 
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+                    <div class="stat-info">
+                        <h3>Zamówienia</h3>
+                        <p>{{ orders_count|default('0') }}</p>
+                    </div>
+                </div>
+            </div>
             <div class="actions-bar">
                 <button class="btn-primary" id="open-product-modal">
                     <i class="fa-solid fa-plus"></i> Dodaj nowy produkt
@@ -104,25 +124,17 @@
                     <h2>Dodaj / Edytuj Produkt</h2>
                     <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <form id="product-form">
-                    <div class="form-group">
-                        <label>Nazwa produktu</label>
-                        <input type="text" placeholder="np. Karta Graficzna RTX 4090" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Cena (PLN)</label>
-                        <input type="number" placeholder="0.00" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ilość w magazynie</label>
-                        <input type="number" placeholder="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label>URL Zdjęcia (opcjonalnie)</label>
-                        <input type="text" placeholder="https://...">
-                    </div>
-                    <button type="submit" class="login-btn">Zapisz produkt</button>
-                </form>
+            <form id="product-form" action="/admin/add-product" method="POST">
+                <div class="form-group">
+                    <label>Kategoria</label>
+                    <select name="category_id" required>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id_kategorii }}">{{ cat.nazwa_kategorii }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Zapisz produkt</button>
+            </form>
             </div>
         </div>
 
