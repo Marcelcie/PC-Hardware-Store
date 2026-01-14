@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rejestracja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <div class="layout-container"> 
+        <main class="login-container">
+            <div class="login-box">
+                <div class="header-positioning">
+                    <a href="index.html"><i class="fa-solid fa-arrow-left"></i></a>
+                    <h1>Rejestracja</h1>
+                    <div class="spacer"></div>
+                </div>
+
+                <form action="/register" method="POST">
+                    <div class="form-group">
+                        <label for="imie">Imię</label>
+                        <input type="text" id="imie" name="imie" required placeholder="Jan">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nazwisko">Nazwisko</label>
+                        <input type="text" id="nazwisko" name="nazwisko" required placeholder="Kowalski">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" name="email" required placeholder="jan@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Hasło</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" name="password" required>
+                            <i class="fa-solid fa-eye toggle-password"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-btn">Załóż konto</button>
+                </form>
+
+                <div class="login-footer">
+                    <p>Masz już konto? <a href="login.html">Zaloguj się</a></p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.nazwa_modelu }} - Sklep</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+     <header>
+        <div class="logo">
+            <a href="/" class="logo-link">
+                <i class="fa-solid fa-shop"></i>
+                <span class="sr-only">Logo Sklepu</span>
+            </a>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="wyszukaj">
+            <div class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></div>
+        </div>
+        <div class="user-actions">
+            {% if user %}
+                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
+                    <i class="fa-solid fa-user-check" style="color: green;"></i>
+                </a>
+            {% else %}
+                <a href="login.html" title="Zaloguj się">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
+
+            <a href="koszyk.html" class="cart-link">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span class="cart-count">0</span>
+            </a>
+
+            {% if user %}
+                <a href="/logout" title="Wyloguj">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="layout-container">
+    <main class="product-detail">
+        <div class="product-gallery">
+            {% if product.zdjecie_url %}
+                <img src="{{ product.zdjecie_url }}" alt="{{ product.nazwa_modelu }}">
+            {% else %}
+                <img src="https://placehold.co/600x450" alt="Brak zdjęcia">
+            {% endif %}
+        </div>
+
+        <div class="product-info">
+            <nav class="breadcrumb">
+                <a href="/">Strona główna</a> / <span>Szczegóły produktu</span>
+            </nav>
+            
+            <h1>{{ product.nazwa_modelu }}</h1>
+            <p class="sku">ID Produktu: {{ product.id_modelu }}</p>
+            
+            <div class="price-section">
+                <span class="price-value">{{ product.cena_katalogowa }} zł</span>
+                
+                {% if product.stan_magazynowy > 0 %}
+                    <span class="availability" style="color: #28a745;">
+                        <i class="fa-solid fa-check"></i> Dostępny ({{ product.stan_magazynowy }} szt.)
+                    </span>
+                {% else %}
+                    <span class="availability" style="color: #dc3545;">
+                        <i class="fa-solid fa-xmark"></i> Wyprzedany
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="purchase-section">
+                    <div class="qty-control">
+                        <button class="qty-minus">-</button>
+                        <input type="number" class="qty-input" value="1" min="1" max="{{ product.stan_magazynowy }}">
+                        <button class="qty-plus">+</button>
+                    </div>
+                {% if product.stan_magazynowy > 0 %}
+                    <button class="add-to-cart-big" data-stock="{{ product.stan_magazynowy }}">
+                        <i class="fa-solid fa-cart-shopping"></i> DODAJ DO KOSZYKA
+                    </button>
+                {% else %}
+                    <button class="add-to-cart-big" disabled style="background-color: #ccc; cursor: not-allowed;">
+                        PRODUKT NIEDOSTĘPNY
+                    </button>
+                {% endif %}
+            </div>
+
+            <div class="product-description">
+                <h3>Opis produktu</h3>
+                <p>{{ product.opis }}</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<footer class="footer-minimal">
+    <div class="footer-minimal-content">
+        <p class="copyright">&copy; 2026 Sklep Komputerowy.</p>
+    </div>
+</footer>
+<script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>

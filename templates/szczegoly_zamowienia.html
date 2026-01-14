@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zamówienie {{ order.numer_zamowienia }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo"><a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a></div>
+        <div class="user-actions">
+            <a href="/konto.html"><i class="fa-solid fa-user"></i></a>
+        </div>
+    </header>
+
+    <div class="layout-container">
+        <main class="account-container" style="flex-direction: column; align-items: center;">
+            <div class="summary-card" style="width: 100%; max-width: 800px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Zamówienie: {{ order.numer_zamowienia }}</h2>
+                    <span class="status shipped">{{ order.status_zamowienia }}</span>
+                </div>
+                
+                <p><strong>Data złożenia:</strong> {{ order.data_zlozenia.strftime('%d.%m.%Y %H:%M') }}</p>
+                
+                <div class="divider" style="margin: 20px 0; border-top: 1px solid #eee;"></div>
+
+                <h3>Adres dostawy:</h3>
+                {% if adres %}
+                <p>
+                    {{ adres.ulica }} {{ adres.nr_domu }}{% if adres.nr_lokalu %}/{{ adres.nr_lokalu }}{% endif %}<br>
+                    {{ adres.kod_pocztowy }} {{ adres.miejscowosc }}
+                </p>
+                {% else %}
+                <p>Brak danych adresowych (archiwum).</p>
+                {% endif %}
+
+                <div class="divider" style="margin: 20px 0; border-top: 1px solid #eee;"></div>
+
+                <h3>Produkty:</h3>
+                <table class="cart-table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th>Produkt</th>
+                            <th>Cena jedn.</th>
+                            <th>Ilość</th>
+                            <th>Suma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    {% if item.model.zdjecie_url %}
+                                        <img src="{{ item.model.zdjecie_url }}" alt="" style="width: 50px; height: auto; border-radius: 4px;">
+                                    {% else %}
+                                        <div style="width: 50px; height: 35px; background: #eee; border-radius: 4px;"></div>
+                                    {% endif %}
+                                    <strong>{{ item.model.nazwa_modelu }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ item.cena_w_chwili_zakupu }} zł</td>
+                            <td>{{ item.ilosc }} szt.</td>
+                            <td>{{ item.ilosc * item.cena_w_chwili_zakupu }} zł</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="price-summary" style="margin-top: 30px; text-align: right;">
+                    <div class="s-row total">
+                        <span>Razem do zapłaty:</span>
+                        <span>{{ order.suma_calkowita }} zł</span>
+                    </div>
+                </div>
+
+                <a href="/konto.html" class="back-link" style="margin-top: 20px; display: inline-block;">
+                    <i class="fa-solid fa-arrow-left"></i> Wróć do listy zamówień
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Jeśli w URL jest parametr ?clear_cart=1, czyścimy localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('clear_cart') === '1') {
+            localStorage.removeItem('myShopCart');
+        }
+    </script>
+</body>
+</html>

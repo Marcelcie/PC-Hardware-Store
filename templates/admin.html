@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administratora</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css"> 
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-user-shield"></i>
+                <span>Admin Panel</span>
+                <button id="close-sidebar" class="mobile-only"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="/admin" class="active"><i class="fa-solid fa-box-open"></i> Produkty</a>
+                <a href="#"><i class="fa-solid fa-users"></i> Użytkownicy</a>
+                <a href="#"><i class="fa-solid fa-chart-line"></i> Raporty</a>
+                <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Powrót do Sklepu</a>
+                
+                <div class="divider"></div>
+                <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            
+            <header class="dashboard-topbar">
+                <button id="sidebar-toggle" class="sidebar-toggle"><i class="fa-solid fa-bars"></i></button>
+                <h1>Zarządzanie Produktami</h1>
+                <div class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=dc3545&color=fff" alt="Admin">
+                </div>
+            </header>
+
+            <div class="actions-bar">
+                <button class="btn-primary" id="open-product-modal">
+                    <i class="fa-solid fa-plus"></i> Dodaj nowy produkt
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Zdjęcie</th>
+                            <th>Nazwa</th>
+                            <th>Cena</th>
+                            <th>Stan</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>#{{ product.id_modelu }}</td>
+                            <td>
+                                <div class="img-placeholder">
+                                    {% if product.zdjecie_url %}
+                                        <img src="{{ product.zdjecie_url }}" alt="img" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">
+                                    {% else %}
+                                        <i class="fa-solid fa-image"></i>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td><strong>{{ product.nazwa_modelu }}</strong></td>
+                            <td>{{ "%.2f"|format(product.cena_katalogowa) }} zł</td>
+                            <td>
+                                {% if product.stan_magazynowy > 5 %}
+                                    <span class="status-badge success">Dostępny ({{ product.stan_magazynowy }})</span>
+                                {% elif product.stan_magazynowy > 0 %}
+                                    <span class="status-badge processing">Ostatnie sztuki ({{ product.stan_magazynowy }})</span>
+                                {% else %}
+                                    <span class="status-badge danger">Brak (0)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="action-btn edit" title="Edytuj"><i class="fa-solid fa-pen"></i></button>
+                                <button class="action-btn delete" title="Usuń"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding: 20px; color: #777;">
+                                Brak produktów w bazie danych. Kliknij "Dodaj nowy produkt" lub użyj seedera.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                </table>
+            </div>
+        </main>
+
+        <div class="modal-overlay" id="product-modal">
+            <div class="modal-box card-style">
+                <div class="modal-header">
+                    <h2>Dodaj / Edytuj Produkt</h2>
+                    <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label>Nazwa produktu</label>
+                        <input type="text" placeholder="np. Karta Graficzna RTX 4090" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cena (PLN)</label>
+                        <input type="number" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ilość w magazynie</label>
+                        <input type="number" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>URL Zdjęcia (opcjonalnie)</label>
+                        <input type="text" placeholder="https://...">
+                    </div>
+                    <button type="submit" class="login-btn">Zapisz produkt</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    </div>
+
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>
