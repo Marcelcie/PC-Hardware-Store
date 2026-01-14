@@ -20,18 +20,18 @@
                 {% if error %}
                 <div style="color: red; text-align: center; margin-bottom: 10px;">{{ error }}</div>
                 {% endif %}
-
                 <form action="/login" method="POST">
                     <div class="form-group">
-                        <label for="email">Adres E-mail</label>
-                        <input type="email" id="email" name="email" required>
+                        <label for="email">Adres E-mail</label> <div class="input-wrapper">
+                            <input type="email" id="email" name="email" autocomplete="email" required>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label for="password">Hasło</label>
                         <div class="input-wrapper">
                             <input type="password" id="password" name="password" required>
-                            <i class="fa-solid fa-eye toggle-password"></i>
+                            <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
                         </div>
                     </div>
 

@@ -36,40 +36,48 @@ ul {
   display: flex;
   flex-direction: column;
 }
+
 .form-group label {
   margin-bottom: 8px;
   font-weight: bold;
 }
 
 .input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
+  display: flex;  
+  align-items: center; 
   width: 100%;
-}
-.input-wrapper input {
-  width: 100%;
-  padding: 12px 15px;
-  padding-right: 45px;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd; 
   border-radius: 6px;
-  font-size: 16px;
+  background-color: #fff;
   transition: border-color 0.2s;
+  overflow: hidden;     
 }
-.input-wrapper input:focus {
+
+
+.input-wrapper:focus-within {
   border-color: #007bff;
-  outline: none;
 }
-.input-wrapper i.toggle-password, .input-wrapper [id^=togglePassword] {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
+
+.input-wrapper input {
+  flex: 1;                
+  padding: 12px 15px;
+  border: none !important; 
+  outline: none;          
+  font-size: 16px;
+  background: transparent;
+}
+
+.input-wrapper i.toggle-password {
+  padding: 0 15px;        
   color: #999;
   cursor: pointer;
-  z-index: 5;
+  font-size: 18px;
+  transition: color 0.2s;
+  display: flex;         
+  align-items: center;
 }
-.input-wrapper i.toggle-password:hover, .input-wrapper [id^=togglePassword]:hover {
+
+.input-wrapper i.toggle-password:hover {
   color: #007bff;
 }
 

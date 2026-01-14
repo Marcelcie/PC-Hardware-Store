@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('product-modal');
     const openBtn = document.getElementById('open-product-modal');
     const closeBtn = document.querySelector('.close-modal');
+    const togglePassword = document.querySelector('#togglePassword');
+    const passwordInput = document.querySelector('#password');
 
     // --- 1. ZARZĄDZANIE KOSZYKIEM (LOCAL STORAGE) ---
     
@@ -76,7 +78,18 @@ document.addEventListener('DOMContentLoaded', () => {
             addToCart(id, qty, stock);
         });
     }
-
+    // --- OBSŁUGA OKA (WIDOCZNOŚĆ HASŁA) ---
+if (togglePassword && passwordInput) {
+    togglePassword.addEventListener('click', function() {
+        // Przełączanie typu pola (password <-> text)
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        // Przełączanie ikony (FontAwesome)
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
+    });
+}
     // --- 3. LOGIKA STRONY KOSZYKA (Tabela) ---
     const cartTableBody = document.querySelector('.cart-table tbody');
     if (cartTableBody) {
@@ -343,9 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
-
-// Ozywienie okna w panelu administratora
+    // Ozywienie okna w panelu administratora
 
 if (openBtn) {
     openBtn.addEventListener('click', () => {
@@ -365,4 +376,5 @@ window.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.classList.remove('active');
     }
+});
 });
