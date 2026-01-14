@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 $primary-color: #007bff;
 $success-color: #28a745;
 $warning-color: #ffc107;
@@ -6,6 +7,8 @@ $bg-light: #f4f6f8;
 $sidebar-width: 260px;
 $shadow-sm: 0 2px 5px rgba(0,0,0,0.05);
 
+=======
+>>>>>>> f38cdaf5b1b62717fcbdc5d9ac47a61c08130189
 * {
   box-sizing: border-box;
   margin: 0;
@@ -36,13 +39,17 @@ ul {
   display: flex;
   flex-direction: column;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> f38cdaf5b1b62717fcbdc5d9ac47a61c08130189
 .form-group label {
   margin-bottom: 8px;
   font-weight: bold;
 }
 
 .input-wrapper {
+<<<<<<< HEAD
   display: flex;  
   align-items: center; 
   width: 100%;
@@ -78,6 +85,36 @@ ul {
 }
 
 .input-wrapper i.toggle-password:hover {
+=======
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.input-wrapper input {
+  width: 100%;
+  padding: 12px 15px;
+  padding-right: 45px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+.input-wrapper input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+.input-wrapper i.toggle-password, .input-wrapper [id^=togglePassword] {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  cursor: pointer;
+  z-index: 5;
+}
+.input-wrapper i.toggle-password:hover, .input-wrapper [id^=togglePassword]:hover {
+>>>>>>> f38cdaf5b1b62717fcbdc5d9ac47a61c08130189
   color: #007bff;
 }
 
@@ -772,6 +809,7 @@ footer .copyright {
   .account-sidebar {
     width: 100%;
   }
+<<<<<<< HEAD
 }
 
   /* Panel administratora */
@@ -978,3 +1016,6 @@ footer .copyright {
         }
     }
 }
+=======
+}
+>>>>>>> f38cdaf5b1b62717fcbdc5d9ac47a61c08130189
