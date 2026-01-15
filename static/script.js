@@ -420,3 +420,43 @@ function confirmDelete(id) {
         });
     }
 }
+
+function openEditModal(btn) {
+    const modal = document.getElementById('product-modal');
+    const form = document.getElementById('product-form');
+
+    // Zmieniamy akcję formularza na edycję
+    form.action = "/admin/edit-product";
+
+    // Uzupełniamy dane z atrybutów data-
+    // Uwaga: Musisz dodać <input type="hidden" name="product_id"> do formularza w admin.html!
+    let idInput = form.querySelector('input[name="product_id"]');
+    if (!idInput) {
+        idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'product_id';
+        form.appendChild(idInput);
+    }
+    idInput.value = btn.dataset.id;
+
+    form.querySelector('input[name="nazwa_modelu"]').value = btn.dataset.name;
+    form.querySelector('input[name="cena"]').value = btn.dataset.price;
+    form.querySelector('input[name="stan"]').value = btn.dataset.stock;
+    form.querySelector('select[name="category_id"]').value = btn.dataset.cat;
+    form.querySelector('input[name="zdjecie_url"]').value = btn.dataset.img || '';
+    form.querySelector('input[name="opis"]').value = btn.dataset.desc || '';
+
+    // Zmień tytuł modala i tekst przycisku
+    modal.querySelector('h2').innerText = "Edytuj Produkt";
+    modal.querySelector('button[type="submit"]').innerHTML = '<i class="fa-solid fa-save"></i> Zapisz zmiany';
+
+    modal.classList.add('active');
+}
+
+// Musisz też dodać obsługę przycisku "Dodaj nowy produkt", żeby czyścił formularz
+document.getElementById('open-product-modal').addEventListener('click', () => {
+    const form = document.getElementById('product-form');
+    form.reset();
+    form.action = "/admin/add-product";
+    document.querySelector('#product-modal h2').innerText = "Dodaj Nowy Produkt";
+});

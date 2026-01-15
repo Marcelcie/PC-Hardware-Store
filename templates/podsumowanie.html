@@ -2,10 +2,9 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Podsumowanie Zamówienia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
@@ -22,101 +21,136 @@
 
     <div class="layout-container">
         <div class="checkout-layout">
-            
-        <div class="checkout-left">
-            
-            {% if adres %}
-            <div id="default-address-section">
-                <div class="default-address-card">
-                    <h3><i class="fa-solid fa-house-user"></i> Adres do wysyłki</h3>
-                    <p>
-                        <strong>{{ adres.ulica }} {{ adres.nr_domu }}{% if adres.nr_lokalu %}/{{ adres.nr_lokalu }}{% endif %}</strong><br>
-                        {{ adres.kod_pocztowy }} {{ adres.miejscowosc }}
-                    </p>
-                    
-                    <form action="/order/submit" method="POST" onsubmit="prepareCart(this)">
-                        <input type="hidden" name="cart_json" class="cart-data-input">
-                        <input type="hidden" name="use_default" value="true">
-                        <button type="submit" class="login-btn" style="background: #28a745;">
-                            Zamawiam na ten adres
-                        </button>
-                    </form>
 
-                    <div class="address-actions">
-                        <button type="button" class="btn-small" onclick="editDefaultAddress()">Edytuj dane</button>
-                        <button type="button" class="btn-small" onclick="showNewAddressForm()">Inny adres</button>
+            <div class="checkout-left">
+
+                {% if adres %}
+                <div id="default-address-section">
+                    <div class="default-address-card">
+                        <h3><i class="fa-solid fa-house-user"></i> Adres do wysyłki</h3>
+                        <p>
+                            <strong>{{ adres.ulica }} {{ adres.nr_domu }}{% if adres.nr_lokalu %}/{{ adres.nr_lokalu }}{% endif %}</strong><br>
+                            {{ adres.kod_pocztowy }} {{ adres.miejscowosc }}
+                        </p>
+
+                        <form action="/order/submit" method="POST" onsubmit="prepareCart(this)">
+                            <input type="hidden" name="cart_json" class="cart-data-input">
+                            <input type="hidden" name="ulica" value="{{ adres.ulica }}">
+                            <input type="hidden" name="nr_domu" value="{{ adres.nr_domu }}">
+                            <input type="hidden" name="nr_lokalu" value="{{ adres.nr_lokalu or '' }}">
+                            <input type="hidden" name="kod_pocztowy" value="{{ adres.kod_pocztowy }}">
+                            <input type="hidden" name="miejscowosc" value="{{ adres.miejscowosc }}">
+
+                            <button type="submit" class="login-btn" style="background: #28a745;">
+                                Zamawiam na ten adres
+                            </button>
+                        </form>
+
+                        <div class="address-actions">
+                            <button type="button" class="btn-small" onclick="editDefaultAddress()">Edytuj dane</button>
+                            <button type="button" class="btn-small" onclick="showNewAddressForm()">Inny adres</button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div id="checkout-form-container" class="{% if adres %}hidden{% endif %}">
+                    <div class="checkout-box">
+                        <h2>Wprowadź dane dostawy</h2>
+                        <form action="/order/submit" method="POST" id="order-form" onsubmit="prepareCart(this)">
+                            <input type="hidden" name="cart_json" class="cart-data-input">
+
+                            <div class="form-group">
+                                <label>Ulica</label>
+                                <div class="input-wrapper">
+                                    <input type="text" name="ulica" id="input-ulica" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="display: flex; gap: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Nr domu</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" name="nr_domu" id="input-nr_domu" required>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Nr lokalu</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" name="nr_lokalu" id="input-nr_lokalu">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="display: flex; gap: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Kod pocztowy</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" name="kod_pocztowy" id="input-kod" placeholder="00-000" required>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="flex: 2;">
+                                    <label>Miejscowość</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" name="miejscowosc" id="input-miasto" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="login-btn">Finalizuj zamówienie</button>
+
+                            {% if adres %}
+                            <button type="button" class="btn-toggle-form" onclick="cancelNewAddress()" style="margin-top: 10px; border: none; background: none; text-decoration: underline; cursor: pointer;">
+                                Wróć do adresu domyślnego
+                            </button>
+                            {% endif %}
+                        </form>
                     </div>
                 </div>
             </div>
-            {% endif %}
 
-            <div id="checkout-form-container" class="{% if adres %}hidden{% endif %}">
-                <div class="checkout-box">
-                    <h2>Wprowadź dane dostawy</h2>
-                    <form action="/order/submit" method="POST" id="order-form" onsubmit="prepareCart(this)">
-                        <input type="hidden" name="cart_json" class="cart-data-input">
-
-                        <div class="form-group">
-                            <label>Ulica</label>
-                            <div class="input-wrapper">
-                                <input type="text" name="ulica" id="input-ulica" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row" style="display: flex; gap: 15px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label>Nr domu</label>
-                                <div class="input-wrapper">
-                                    <input type="text" name="nr_domu" id="input-nr_domu" required>
-                                </div>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label>Nr lokalu</label>
-                                <div class="input-wrapper">
-                                    <input type="text" name="nr_lokalu" id="input-nr_lokalu">
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="login-btn">Finalizuj zamówienie</button>
-                        
-                        {% if adres %}
-                        <button type="button" class="btn-toggle-form" onclick="cancelNewAddress()" style="margin-top: 10px; border: none; background: none; text-decoration: underline;">
-                            Wróć do adresu domyślnego
-                        </button>
-                        {% endif %}
-                    </form>
-                </div>
+            <div class="checkout-right">
+                 <div class="summary-box">
+                    <h3>Twoje produkty</h3>
+                    <div id="mini-cart-items">
+                        Ładowanie...
+                    </div>
+                    <div class="summary-total" style="margin-top: 20px; font-size: 1.2em; border-top: 1px solid #ddd; padding-top: 10px;">
+                        Razem: <span id="mini-cart-total-price">0.00 zł</span>
+                    </div>
+                 </div>
             </div>
+
         </div>
+    </div>
 
-    {% if adres %}
-<script>
-    // Deklarujemy zmienną tylko RAZ.
-    let defaultAddressData = null; 
+    <script>
+        // 1. Zmienne globalne z Jinja2
+        let defaultAddressData = null;
+        {% if adres %}
+        defaultAddressData = {
+            ulica: "{{ adres.ulica }}",
+            nr_domu: "{{ adres.nr_domu }}",
+            nr_lokalu: "{{ adres.nr_lokalu or '' }}",
+            kod: "{{ adres.kod_pocztowy }}",
+            miasto: "{{ adres.miejscowosc }}"
+        };
+        {% endif %}
 
-    // Używamy Jinja, aby wypełnić obiekt tylko jeśli adres istnieje.
-    {% if adres %}
-    defaultAddressData = {
-        ulica: "{{ adres.ulica }}",
-        nr_domu: "{{ adres.nr_domu }}",
-        nr_lokalu: "{{ adres.nr_lokalu or '' }}",
-        kod: "{{ adres.kod_pocztowy }}",
-        miasto: "{{ adres.miejscowosc }}"
-    };
-    {% endif %}
-    
-    // Teraz Twoja funkcja showNewAddressForm() i reszta logiki...
-</script>
-        // --- LOGIKA PRZEŁĄCZANIA WIDOKÓW ---
-        
+        // 2. Funkcja przygotowująca koszyk do wysyłki (JSON -> Input)
+        function prepareCart(form) {
+            const cart = localStorage.getItem('myShopCart') || '[]';
+            const jsonInput = form.querySelector('input[name="cart_json"]');
+            if (jsonInput) {
+                jsonInput.value = cart;
+            }
+        }
+
+        // 3. Obsługa widoków adresu
         function showNewAddressForm() {
             document.getElementById('default-address-section').style.display = 'none';
             document.getElementById('checkout-form-container').style.display = 'block';
-            // Czyścimy formularz, bo to "nowy adres"
             document.getElementById('order-form').reset();
-            // Przywracamy wartość ukrytego pola koszyka (bo reset() mógł go wyczyścić)
-            fillCartData();
         }
 
         function cancelNewAddress() {
@@ -125,33 +159,20 @@
         }
 
         function editDefaultAddress() {
-            // 1. Pokaż formularz
             document.getElementById('default-address-section').style.display = 'none';
             document.getElementById('checkout-form-container').style.display = 'block';
-            
-            // 2. Wypełnij formularz danymi domyślnymi
+
             if (defaultAddressData) {
                 document.getElementById('input-ulica').value = defaultAddressData.ulica;
                 document.getElementById('input-nr_domu').value = defaultAddressData.nr_domu;
                 document.getElementById('input-nr_lokalu').value = defaultAddressData.nr_lokalu;
                 document.getElementById('input-kod').value = defaultAddressData.kod;
                 document.getElementById('input-miasto').value = defaultAddressData.miasto;
-                // Zaznacz checkbox, bo to w końcu domyślny
-                document.getElementById('save_default').checked = true;
             }
         }
 
-        function fillCartData() {
-            const cart = localStorage.getItem('myShopCart');
-            if (cart) {
-                document.getElementById('cart-json-input').value = cart;
-            }
-        }
-
-        // --- LOGIKA MINI KOSZYKA (JS) ---
+        // 4. Ładowanie podsumowania koszyka
         document.addEventListener('DOMContentLoaded', async () => {
-            fillCartData();
-            
             const cartJson = localStorage.getItem('myShopCart');
             if (!cartJson || JSON.parse(cartJson).length === 0) {
                 alert("Twój koszyk jest pusty!");
@@ -162,48 +183,48 @@
             const cart = JSON.parse(cartJson);
             const ids = cart.map(item => item.id);
 
-            // Pobierz szczegóły produktów z API
             try {
+                // Pobieramy ceny z backendu
                 const response = await fetch('/api/products-details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(ids)
                 });
-                const products = await response.json();
-                
-                const container = document.getElementById('mini-cart-items');
-                container.innerHTML = '';
-                let total = 0;
 
-                cart.forEach(cartItem => {
-                    const product = products.find(p => p.id === cartItem.id);
-                    if (!product) return;
+                if (response.ok) {
+                    const products = await response.json();
+                    const container = document.getElementById('mini-cart-items');
+                    container.innerHTML = '';
+                    let total = 0;
 
-                    const subtotal = product.price * cartItem.qty;
-                    total += subtotal;
+                    cart.forEach(cartItem => {
+                        const product = products.find(p => p.id === cartItem.id);
+                        if (!product) return;
 
-                    const html = `
-                        <div class="mini-cart-item">
-                            <img src="${product.image || 'https://placehold.co/50'}" alt="">
-                            <div class="mini-cart-info">
-                                <span class="mini-cart-title">${product.name}</span>
-                                <div class="mini-cart-meta">
-                                    ${cartItem.qty} szt. x ${product.price} zł
+                        const subtotal = product.price * cartItem.qty;
+                        total += subtotal;
+
+                        const html = `
+                            <div class="mini-cart-item" style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
+                                <img src="${product.image || 'https://placehold.co/50'}" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;">
+                                <div class="mini-cart-info" style="flex:1;">
+                                    <div style="font-weight:600; font-size:0.9em;">${product.name}</div>
+                                    <div style="color:#666; font-size:0.8em;">
+                                        ${cartItem.qty} szt. x ${product.price} zł
+                                    </div>
+                                </div>
+                                <div style="font-weight:bold;">
+                                    ${subtotal.toFixed(2)} zł
                                 </div>
                             </div>
-                            <div style="font-weight: bold;">
-                                ${subtotal.toFixed(2)} zł
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', html);
-                });
+                        `;
+                        container.insertAdjacentHTML('beforeend', html);
+                    });
 
-                document.getElementById('mini-cart-total-price').innerText = total.toFixed(2) + " zł";
-
+                    document.getElementById('mini-cart-total-price').innerText = total.toFixed(2) + " zł";
+                }
             } catch (error) {
                 console.error(error);
-                document.getElementById('mini-cart-items').innerText = "Błąd wczytywania produktów.";
             }
         });
     </script>

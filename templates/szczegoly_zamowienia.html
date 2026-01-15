@@ -77,9 +77,17 @@
                     </div>
                 </div>
 
-                <a href="/konto.html" class="back-link" style="margin-top: 20px; display: inline-block;">
-                    <i class="fa-solid fa-arrow-left"></i> Wróć do listy zamówień
-                </a>
+                <div style="margin-top: 20px;">
+                    {% if user.id_roli %}
+                        <a href="javascript:history.back()" class="back-link">
+                            <i class="fa-solid fa-arrow-left"></i> Wróć do panelu
+                        </a>
+                    {% else %}
+                        <a href="/konto.html" class="back-link">
+                            <i class="fa-solid fa-arrow-left"></i> Wróć do listy zamówień
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </main>
     </div>

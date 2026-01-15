@@ -2,26 +2,26 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administratora</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/style.css"> 
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .dashboard-section { display: none; }
+        .dashboard-section.active { display: block; }
+    </style>
 </head>
 <body>
-
     <div class="dashboard-container">
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <i class="fa-solid fa-user-shield"></i>
                 <span>Admin Panel</span>
             </div>
-            
             <nav class="sidebar-nav">
-                <a href="/admin" class="active"><i class="fa-solid fa-box-open"></i> Produkty</a>
-                <a href="#"><i class="fa-solid fa-users"></i> Użytkownicy</a>
-                <a href="#"><i class="fa-solid fa-chart-line"></i> Raporty</a>
-                <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Powrót do Sklepu</a>
-                
+                <a href="#produkty" class="nav-link active"><i class="fa-solid fa-box-open"></i> Produkty</a>
+                <a href="#zamowienia" class="nav-link"><i class="fa-solid fa-list-check"></i> Zamówienia</a>
+
+                <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Sklep</a>
                 <div class="divider"></div>
                 <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</a>
             </nav>
@@ -29,135 +29,220 @@
 
         <main class="main-content">
             <header class="dashboard-topbar">
-                <h1>Zarządzanie Produktami</h1>
-                <div class="user-avatar">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=dc3545&color=fff" alt="Admin">
+                <h1>Zarządzanie Systemem</h1>
+                <div class="user-info">
+                    Zalogowany: <strong>{{ user.imie }} {{ user.nazwisko }}</strong> (Administrator)
                 </div>
             </header>
 
             <div class="stats-grid">
-                <div class="stat-card">
+                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                     <div class="stat-info">
                         <h3>Produkty</h3>
                         <p>{{ products|length }}</p>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <div class="stat-info">
-                        <h3>Niski stan</h3>
-                        <p>{{ low_stock_count|default('0') }}</p>
-                    </div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+                 <div class="stat-card success">
+                    <div class="stat-icon"><i class="fa-solid fa-file-invoice"></i></div>
                     <div class="stat-info">
                         <h3>Zamówienia</h3>
-                        <p>{{ orders_count|default('0') }}</p>
+                        <p>{{ orders|length }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="actions-bar">
-                <button class="btn-primary" id="open-product-modal">
-                    <i class="fa-solid fa-plus"></i> Dodaj nowy produkt
-                </button>
+            <div id="produkty" class="dashboard-section active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="section-title" style="margin-bottom: 0;">Baza Produktów</h2>
+                    <button class="btn-primary" id="open-product-modal">
+                        <i class="fa-solid fa-plus"></i> Dodaj produkt
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Foto</th>
+                                <th>Nazwa</th>
+                                <th>Cena</th>
+                                <th>Stan</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>#{{ product.id_modelu }}</td>
+                                <td class="product-img-td">
+                                    <div class="img-wrapper">
+                                        {% if product.zdjecie_url %}
+                                            <img src="{{ product.zdjecie_url }}" alt="img">
+                                        {% else %}
+                                            <i class="fa-solid fa-image" style="color: #ccc;"></i>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>{{ product.nazwa_modelu }}</strong>
+                                    <br><small>{{ product.kategoria }}</small>
+                                </td>
+                                <td>{{ "%.2f"|format(product.cena_katalogowa) }} zł</td>
+                                <td>{{ product.stan_magazynowy }}</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="action-btn edit"
+                                                data-id="{{ product.id_modelu }}"
+                                                data-name="{{ product.nazwa_modelu }}"
+                                                data-price="{{ product.cena_katalogowa }}"
+                                                data-stock="{{ product.stan_magazynowy }}"
+                                                data-cat="{{ product.id_kategorii }}"
+                                                data-img="{{ product.zdjecie_url }}"
+                                                data-desc="{{ product.opis }}"
+                                                onclick="openEditModal(this)">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button class="action-btn delete" onclick="if(confirm('Usunąć?')) location.href='/admin/delete/{{ product.id_modelu }}'">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="dashboard-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Produkt</th>
-                            <th>Nazwa</th>
-                            <th>Cena</th>
-                            <th>Stan Magazynowy</th>
-                            <th>Akcje</th>
-                        </tr>
-                    </thead>
-                    <tbody> 
-                        {% for product in products %}
-                        <tr>
-                            <td style="color: #888; font-weight: 600;">#{{ product.id_modelu }}</td>
-                            <td class="product-img-td">
-                                <div class="img-wrapper">
-                                    {% if product.zdjecie_url %}
-                                        <img src="{{ product.zdjecie_url }}" alt="product">
-                                    {% else %}
-                                        <i class="fa-solid fa-image" style="color: #cbd5e1;"></i>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                <div style="font-weight: 600; color: #222;">{{ product.nazwa_modelu }}</div>
-                                <div style="font-size: 12px; color: #999;">Kategoria: {{ product.kategoria }}</div>
-                            </td>
-                            <td style="font-weight: 700;">{{ "%.2f"|format(product.cena_katalogowa) }} zł</td>
-                            <td>
-                                {% if product.stan_magazynowy > 5 %}
-                                    <span class="status-badge success">Dostępny ({{ product.stan_magazynowy }})</span>
-                                {% elif product.stan_magazynowy > 0 %}
-                                    <span class="status-badge processing">Ostatnie sztuki ({{ product.stan_magazynowy }})</span>
-                                {% else %}
-                                    <span class="status-badge danger">Brak towaru</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn edit" 
-                                            data-id="{{ product.id_modelu }}" 
-                                            onclick="openEditModal(this.getAttribute('data-id'))" 
-                                            title="Edytuj">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
-                                    <button class="action-btn delete" 
-                                            data-id="{{ product.id_modelu }}" 
-                                            onclick="confirmDelete(this.getAttribute('data-id'))" 
-                                            title="Usuń">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div id="zamowienia" class="dashboard-section">
+                <h2 class="section-title">Wszystkie Zamówienia (Pełna edycja)</h2>
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Nr Zamówienia</th>
+                                <th>Data</th>
+                                <th>Klient</th>
+                                <th>Obecny Status</th>
+                                <th>Zmień na (Dowolny)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ order.numer_zamowienia }}</strong></td>
+                                <td>{{ order.data_zlozenia.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ order.email_kontakt_do_zam }}</td>
+                                <td><span class="status-badge processing">{{ order.status_zamowienia }}</span></td>
+                                <td>
+                                    <form action="/api/update-order-status" method="POST" style="display: flex; gap: 10px;">
+                                        <input type="hidden" name="order_id" value="{{ order.id_zamowienia }}">
+                                        <select name="new_status" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                                            <option value="Nowe" {% if order.status_zamowienia == 'Nowe' %}selected{% endif %}>Nowe</option>
+                                            <option value="Opłacone" {% if order.status_zamowienia == 'Opłacone' %}selected{% endif %}>Opłacone</option>
+                                            <option value="W magazynie" {% if order.status_zamowienia == 'W magazynie' %}selected{% endif %}>W magazynie</option>
+                                            <option value="W realizacji" {% if order.status_zamowienia == 'W realizacji' %}selected{% endif %}>W realizacji</option>
+                                            <option value="Wysłane" {% if order.status_zamowienia == 'Wysłane' %}selected{% endif %}>Wysłane</option>
+                                            <option value="Dostarczone" {% if order.status_zamowienia == 'Dostarczone' %}selected{% endif %}>Dostarczone</option>
+                                            <option value="Anulowane" {% if order.status_zamowienia == 'Anulowane' %}selected{% endif %}>Anulowane</option>
+                                        </select>
+                                        <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">Zapisz</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
         </main>
     </div>
 
     <div class="modal-overlay" id="product-modal">
         <div class="modal-box card-style">
             <div class="modal-header">
-                <h2>Dodaj / Edytuj Produkt</h2>
+                <h2>Produkt</h2>
                 <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
             <form id="product-form" action="/admin/add-product" method="POST">
+                <input type="hidden" name="product_id">
+
+                <div class="form-group">
+                    <label>Nazwa</label>
+                    <input type="text" name="nazwa_modelu" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex:1">
+                        <label>Cena</label>
+                        <input type="number" step="0.01" name="cena" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Stan</label>
+                        <input type="number" name="stan" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Kategoria</label>
-                    <select name="category_id" required>
+                    <select name="category_id" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         {% for cat in categories %}
                             <option value="{{ cat.id_kategorii }}">{{ cat.nazwa_kategorii }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <button type="submit" class="btn-primary" style="width: 100%;">Zapisz produkt</button>
+                <div class="form-group">
+                    <label>URL Zdjęcia</label>
+                    <input type="text" name="zdjecie_url" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label>Opis</label>
+                    <input type="text" name="opis" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Zapisz</button>
             </form>
         </div>
     </div>
-    <div id="cookie-banner" class="cookie-banner">
-    <div class="cookie-content">
-        <i class="fa-solid fa-cookie-bite"></i>
-        <p>
-            Ta strona korzysta z ciasteczek (cookies), abyś mógł robić zakupy bez problemu. 
-            Korzystając ze strony, zgadzasz się na ich użycie.
-        </p>
-    </div>
-    <button id="accept-cookies-btn">Rozumiem, dzięki</button>
-    </div>
-    <script src="{{ url_for('static', path='script.js') }}"></script>
+
+    <script>
+        // Zakładki
+        const links = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.dashboard-section');
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                links.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                const targetId = link.getAttribute('href').substring(1);
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        // Modal
+        const modal = document.getElementById('product-modal');
+        const form = document.getElementById('product-form');
+
+        document.getElementById('open-product-modal').addEventListener('click', () => {
+            form.reset();
+            form.action = "/admin/add-product";
+            modal.classList.add('active');
+        });
+
+        document.querySelector('.close-modal').addEventListener('click', () => modal.classList.remove('active'));
+
+        function openEditModal(btn) {
+            form.action = "/admin/edit-product";
+            form.querySelector('input[name="product_id"]').value = btn.dataset.id;
+            form.querySelector('input[name="nazwa_modelu"]').value = btn.dataset.name;
+            form.querySelector('input[name="cena"]').value = btn.dataset.price;
+            form.querySelector('input[name="stan"]').value = btn.dataset.stock;
+            form.querySelector('select[name="category_id"]').value = btn.dataset.cat;
+            form.querySelector('input[name="zdjecie_url"]').value = btn.dataset.img || '';
+            form.querySelector('input[name="opis"]').value = btn.dataset.desc || '';
+            modal.classList.add('active');
+        }
+    </script>
 </body>
 </html>
