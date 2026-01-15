@@ -308,7 +308,6 @@ def cart_page(request: Request, db: Session = Depends(get_db)):
 def details_page(request: Request, id: int = None, db: Session = Depends(get_db)):
     product = None
     if id: product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == id).first()
-<<<<<<< HEAD
     return templates.TemplateResponse("szczegoly.html", {"request": request, "product": product})
 
 @app.get("/admin.html")
@@ -326,6 +325,3 @@ def magazynier_panel(request: Request, db: Session = Depends(get_db)):
         "request": request, 
         "orders": orders
     })
-=======
-    return templates.TemplateResponse("szczegoly.html", {"request": request, "product": product})
->>>>>>> f38cdaf5b1b62717fcbdc5d9ac47a61c08130189

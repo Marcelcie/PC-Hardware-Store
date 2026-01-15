@@ -29,6 +29,7 @@ ul {
   display: flex;
   flex-direction: column;
 }
+
 .form-group label {
   margin-bottom: 8px;
   font-weight: bold;
@@ -126,6 +127,7 @@ header .search-bar .search-btn {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 header .search-bar .search-btn i {
   font-size: 22px;
   color: #000;
@@ -146,6 +148,7 @@ header .user-actions a {
   margin-left: 15px;
   transition: color 0.3s;
 }
+
 header .user-actions a:hover {
   color: #007bff;
 }
@@ -359,6 +362,7 @@ main .product-grid {
   font-weight: bold;
   font-size: 18px;
 }
+
 .product-card .product-footer .cart-btn {
   background-color: #007bff;
   display: flex;
@@ -658,6 +662,10 @@ footer .copyright {
   text-align: center;
   border: none;
   font-weight: bold;
+}
+
+.hidden {
+  display: none;
 }
 
 /* --- KONTO --- */
