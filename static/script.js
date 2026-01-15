@@ -376,5 +376,47 @@ window.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.classList.remove('active');
     }
+
+// --- OBSŁUGA COOKIES ---
+    const cookieBanner = document.getElementById('cookie-banner');
+    const acceptBtn = document.getElementById('accept-cookies-btn');
+
+    // 1. Sprawdź czy użytkownik już zaakceptował
+    if (!localStorage.getItem('cookiesAccepted')) {
+        setTimeout(() => {
+            if(cookieBanner) cookieBanner.style.display = 'flex';
+        }, 500);
+    }
+
+    // 2. Kliknięcie w przycisk
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', () => {
+            localStorage.setItem('cookiesAccepted', 'true');
+            if(cookieBanner) cookieBanner.style.display = 'none';
+        });
+    }
 });
 });
+
+
+function openEditModal(id) {
+    const modal = document.getElementById('product-modal');
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function confirmDelete(id) {
+    if (confirm(`Czy na pewno chcesz usunąć produkt o ID: ${id}?`)) {
+        fetch(`/admin/delete-product/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Błąd podczas usuwania produktu.');
+            }
+        });
+    }
+}

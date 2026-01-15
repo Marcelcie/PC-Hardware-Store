@@ -10,7 +10,6 @@
 <body>
 
     <div class="dashboard-container">
-        
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <i class="fa-solid fa-user-shield"></i>
@@ -19,8 +18,8 @@
             
             <nav class="sidebar-nav">
                 <a href="/admin" class="active"><i class="fa-solid fa-box-open"></i> Produkty</a>
-                <a href="#"><i class="fa-solid fa-users"></i> ### in process</a>
-                <a href="#"><i class="fa-solid fa-chart-line"></i> ### in process</a>
+                <a href="#"><i class="fa-solid fa-users"></i> Użytkownicy</a>
+                <a href="#"><i class="fa-solid fa-chart-line"></i> Raporty</a>
                 <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Powrót do Sklepu</a>
                 
                 <div class="divider"></div>
@@ -29,28 +28,28 @@
         </aside>
 
         <main class="main-content">
-            
             <header class="dashboard-topbar">
                 <h1>Zarządzanie Produktami</h1>
                 <div class="user-avatar">
                     <img src="https://ui-avatars.com/api/?name=Admin&background=dc3545&color=fff" alt="Admin">
                 </div>
             </header>
-                <div class="stats-grid">
+
+            <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                     <div class="stat-info">
                         <h3>Produkty</h3>
                         <p>{{ products|length }}</p>
                     </div>
-                </div> <div class="stat-card">
+                </div>
+                <div class="stat-card">
                     <div class="stat-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <div class="stat-info">
                         <h3>Niski stan</h3>
                         <p>{{ low_stock_count|default('0') }}</p>
                     </div>
                 </div>
-
                 <div class="stat-card success">
                     <div class="stat-icon"><i class="fa-solid fa-cart-shopping"></i></div>
                     <div class="stat-info">
@@ -59,6 +58,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="actions-bar">
                 <button class="btn-primary" id="open-product-modal">
                     <i class="fa-solid fa-plus"></i> Dodaj nowy produkt
@@ -70,60 +70,71 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Zdjęcie</th>
+                            <th>Produkt</th>
                             <th>Nazwa</th>
                             <th>Cena</th>
-                            <th>Stan</th>
+                            <th>Stan Magazynowy</th>
                             <th>Akcje</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody> 
                         {% for product in products %}
                         <tr>
-                            <td>#{{ product.id_modelu }}</td>
-                            <td>
-                                <div class="img-placeholder">
+                            <td style="color: #888; font-weight: 600;">#{{ product.id_modelu }}</td>
+                            <td class="product-img-td">
+                                <div class="img-wrapper">
                                     {% if product.zdjecie_url %}
-                                        <img src="{{ product.zdjecie_url }}" alt="img" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">
+                                        <img src="{{ product.zdjecie_url }}" alt="product">
                                     {% else %}
-                                        <i class="fa-solid fa-image"></i>
+                                        <i class="fa-solid fa-image" style="color: #cbd5e1;"></i>
                                     {% endif %}
                                 </div>
                             </td>
-                            <td><strong>{{ product.nazwa_modelu }}</strong></td>
-                            <td>{{ "%.2f"|format(product.cena_katalogowa) }} zł</td>
+                            <td>
+                                <div style="font-weight: 600; color: #222;">{{ product.nazwa_modelu }}</div>
+                                <div style="font-size: 12px; color: #999;">Kategoria: {{ product.kategoria }}</div>
+                            </td>
+                            <td style="font-weight: 700;">{{ "%.2f"|format(product.cena_katalogowa) }} zł</td>
                             <td>
                                 {% if product.stan_magazynowy > 5 %}
                                     <span class="status-badge success">Dostępny ({{ product.stan_magazynowy }})</span>
                                 {% elif product.stan_magazynowy > 0 %}
                                     <span class="status-badge processing">Ostatnie sztuki ({{ product.stan_magazynowy }})</span>
                                 {% else %}
-                                    <span class="status-badge danger">Brak (0)</span>
+                                    <span class="status-badge danger">Brak towaru</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <button class="action-btn edit" title="Edytuj"><i class="fa-solid fa-pen"></i></button>
-                                <button class="action-btn delete" title="Usuń"><i class="fa-solid fa-trash"></i></button>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" style="text-align:center; padding: 20px; color: #777;">
-                                Brak produktów w bazie danych. Kliknij "Dodaj nowy produkt" lub użyj seedera.
+                                <div class="action-btns">
+                                    <button class="action-btn edit" 
+                                            data-id="{{ product.id_modelu }}" 
+                                            onclick="openEditModal(this.getAttribute('data-id'))" 
+                                            title="Edytuj">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button class="action-btn delete" 
+                                            data-id="{{ product.id_modelu }}" 
+                                            onclick="confirmDelete(this.getAttribute('data-id'))" 
+                                            title="Usuń">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </main>
+    </div>
 
-        <div class="modal-overlay" id="product-modal">
-            <div class="modal-box card-style">
-                <div class="modal-header">
-                    <h2>Dodaj / Edytuj Produkt</h2>
-                    <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
-                </div>
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal-box card-style">
+            <div class="modal-header">
+                <h2>Dodaj / Edytuj Produkt</h2>
+                <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
             <form id="product-form" action="/admin/add-product" method="POST">
                 <div class="form-group">
                     <label>Kategoria</label>
@@ -135,12 +146,18 @@
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%;">Zapisz produkt</button>
             </form>
-            </div>
         </div>
-
-        <div class="sidebar-overlay" id="sidebar-overlay"></div>
     </div>
-
+    <div id="cookie-banner" class="cookie-banner">
+    <div class="cookie-content">
+        <i class="fa-solid fa-cookie-bite"></i>
+        <p>
+            Ta strona korzysta z ciasteczek (cookies), abyś mógł robić zakupy bez problemu. 
+            Korzystając ze strony, zgadzasz się na ich użycie.
+        </p>
+    </div>
+    <button id="accept-cookies-btn">Rozumiem, dzięki</button>
+    </div>
     <script src="{{ url_for('static', path='script.js') }}"></script>
 </body>
 </html>

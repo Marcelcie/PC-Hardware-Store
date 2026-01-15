@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from datetime import datetime
 from typing import Optional, List
+from fastapi import HTTPException
 import json
 
 import models
@@ -313,9 +314,12 @@ def details_page(request: Request, id: int = None, db: Session = Depends(get_db)
 @app.get("/admin.html")
 def admin_panel(request: Request, db: Session = Depends(get_db)):
     products = db.query(models.ModelProduktu).all()
+    categories = db.query(models.Kategoria).all()
+    
     return templates.TemplateResponse("admin.html", {
         "request": request, 
-        "products": products
+        "products": products,
+        "categories": categories
     })
 
 @app.get("/magazyn.html")
@@ -325,3 +329,36 @@ def magazynier_panel(request: Request, db: Session = Depends(get_db)):
         "request": request, 
         "orders": orders
     })
+
+@app.delete("/admin/delete-product/{product_id}")
+def delete_product_endpoint(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.ModelProduktu).filter(models.ModelProduktu.id_modelu == product_id).first()
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nie znaleziony")   
+    try:
+        db.delete(product)
+        db.commit()
+        return {"status": "success", "message": "Produkt usunięty"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Nie można usunąć produktu (może jest w zamówieniach?): {str(e)}")
+    
+@app.post("/admin/add-product")
+def add_product_endpoint(
+    request: Request,
+    category_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    new_product = models.ModelProduktu(
+        nazwa_modelu="Nowy Produkt (Edytuj mnie)",
+        opis="Opis produktu...",
+        cena_katalogowa=0.0,
+        stan_magazynowy=0,
+        id_kategorii=category_id,
+        zdjecie_url="" 
+    )
+    
+    db.add(new_product)
+    db.commit()
+    return RedirectResponse(url="/admin.html", status_code=303)
