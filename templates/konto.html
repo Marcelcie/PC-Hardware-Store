@@ -2,97 +2,181 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
     <title>Moje Konto</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .dashboard-section { display: none; }
+        .dashboard-section.active { display: block; }
+
+        /* Dodatkowy styl dla kart w profilu */
+        .profile-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            max-width: 600px;
+        }
+        .profile-row {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .profile-label {
+            width: 150px;
+            font-weight: bold;
+            color: #666;
+        }
+        .profile-value {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <a href="/" class="logo-link"><i class="fa-solid fa-shop"></i></a>
-        </div>
-        <div class="user-actions">
-            {% if user %}
-                <a href="konto.html" title="Zalogowany jako: {{ user.imie }}">
-                    <i class="fa-solid fa-user-check" style="color: green;"></i>
-                </a>
-            {% else %}
-                <a href="login.html" title="Zaloguj się">
-                    <i class="fa-solid fa-user"></i>
-                </a>
-            {% endif %}
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-user-circle"></i>
+                <span>Strefa Klienta</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dane" class="nav-link active"><i class="fa-solid fa-id-card"></i> Moje Dane</a>
+                <a href="#zamowienia" class="nav-link"><i class="fa-solid fa-box"></i> Historia Zamówień</a>
 
-            <a href="koszyk.html" class="cart-link">
-                <i class="fa-solid fa-basket-shopping"></i>
-                <span class="cart-count">0</span>
-            </a>
+                <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Wróć do sklepu</a>
+                <div class="divider"></div>
+                <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</a>
+            </nav>
+        </aside>
 
-            {% if user %}
-                <a href="/logout" title="Wyloguj">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </a>
-            {% endif %}
-        </div>
-    </header>
+        <main class="main-content">
+            <header class="dashboard-topbar">
+                <h1>Witaj, {{ user.imie }}!</h1>
+                <div class="user-info">
+                    Zalogowany jako: <strong>{{ user.imie }} {{ user.nazwisko }}</strong>
+                </div>
+            </header>
 
-    <div class="layout-container">
-        <main class="account-container">
-            <aside class="account-sidebar">
-                <div class="user-welcome">
-                    <i class="fa-solid fa-circle-user"></i>
-                    <div>
-                        Witaj, <strong>{{ user.imie }} {{ user.nazwisko }}</strong>
-                        <p class="user-id">ID Klienta: #{{ user.id_klienta }}</p>
-                        <p style="font-size: 12px;">{{ user.adres_email }}</p>
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="fa-solid fa-shopping-bag"></i></div>
+                    <div class="stat-info">
+                        <h3>Moje zamówienia</h3>
+                        <p>{{ orders|length }}</p>
                     </div>
                 </div>
-                <nav class="account-nav">
-                    <a href="#" class="active">Moje zamówienia</a>
-                    <a href="/logout" class="logout">Wyloguj się</a>
-                </nav>
-            </aside>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="stat-info">
+                        <h3>Klient od</h3>
+                        <p>{{ user.data_rejestracji.strftime('%Y') }}</p>
+                    </div>
+                </div>
+            </div>
 
-            <section class="account-content">
-                <h1>Moje zamówienia</h1>
-                
+            <div id="dane" class="dashboard-section active">
+                <h2 class="section-title">Informacje o koncie</h2>
+                <div class="profile-card">
+                    <div class="profile-row">
+                        <div class="profile-label"><i class="fa-solid fa-user"></i> Imię i Nazwisko</div>
+                        <div class="profile-value">{{ user.imie }} {{ user.nazwisko }}</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label"><i class="fa-solid fa-envelope"></i> Adres E-mail</div>
+                        <div class="profile-value">{{ user.adres_email }}</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label"><i class="fa-regular fa-clock"></i> Data rejestracji</div>
+                        <div class="profile-value">{{ user.data_rejestracji.strftime('%d.%m.%Y %H:%M') }}</div>
+                    </div>
+
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed #ddd;">
+                        <p style="font-size: 0.9em; color: #888; margin-bottom: 10px;">Bezpieczeństwo</p>
+                        <button class="btn-primary" style="background-color: #6c757d; border: none; cursor: not-allowed;" title="Funkcja w przygotowaniu">
+                            <i class="fa-solid fa-key"></i> Zmień hasło
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="zamowienia" class="dashboard-section">
+                <h2 class="section-title">Twoje ostatnie zamówienia</h2>
+
                 {% if orders %}
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Numer</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                            <th>Suma</th>
-                            <th>Akcja</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in orders %}
-                        <tr>
-                            <td><strong>{{ order.numer_zamowienia }}</strong></td>
-                            <td>{{ order.data_zlozenia.strftime('%d.%m.%Y') }}</td>
-                            <td>
-                                {% if order.status_zamowienia == 'Dostarczone' %}
-                                    <span class="status delivered">{{ order.status_zamowienia }}</span>
-                                {% else %}
-                                    <span class="status shipped">{{ order.status_zamowienia }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ order.suma_calkowita }} zł</td>
-<td>
-    <a href="/zamowienie/{{ order.id_zamowienia }}" class="details-link">Szczegóły</a>
-</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Nr Zamówienia</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Kwota</th>
+                                <th>Akcja</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ order.numer_zamowienia }}</strong></td>
+                                <td>{{ order.data_zlozenia.strftime('%d.%m.%Y') }}</td>
+                                <td>
+                                    {% if order.status_zamowienia == 'Nowe' %}
+                                        <span class="status-badge processing" style="background: #e3f2fd; color: #0d47a1;">Nowe</span>
+                                    {% elif order.status_zamowienia == 'Opłacone' %}
+                                        <span class="status-badge success" style="background: #d4edda; color: #155724;">Opłacone</span>
+                                    {% elif order.status_zamowienia == 'Wysłane' %}
+                                        <span class="status-badge success" style="background: #cce5ff; color: #004085;"><i class="fa-solid fa-truck"></i> Wysłane</span>
+                                    {% elif order.status_zamowienia == 'Dostarczone' %}
+                                        <span class="status-badge success"><i class="fa-solid fa-check"></i> Odebrane</span>
+                                    {% else %}
+                                        <span class="status-badge processing">{{ order.status_zamowienia }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-weight: bold;">{{ "%.2f"|format(order.suma_calkowita) }} zł</td>
+                                <td>
+                                    <a href="/zamowienie/{{ order.id_zamowienia }}" class="action-btn" title="Zobacz szczegóły">
+                                        <i class="fa-solid fa-eye"></i> Szczegóły
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
+                <div style="text-align: center; padding: 40px; background: white; border-radius: 8px;">
+                    <i class="fa-solid fa-basket-shopping" style="font-size: 40px; color: #ccc; margin-bottom: 20px;"></i>
                     <p>Nie złożyłeś jeszcze żadnych zamówień.</p>
+                    <a href="/" class="btn-primary" style="display: inline-block; margin-top: 10px;">Zacznij zakupy</a>
+                </div>
                 {% endif %}
-            </section>
+            </div>
         </main>
     </div>
-    <script src="{{ url_for('static', path='script.js') }}"></script>
+
+    <script>
+        const links = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.dashboard-section');
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Reset klas active
+                links.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+
+                // Aktywacja klikniętego elementu
+                link.classList.add('active');
+
+                // Pokazanie odpowiedniej sekcji
+                const targetId = link.getAttribute('href').substring(1);
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

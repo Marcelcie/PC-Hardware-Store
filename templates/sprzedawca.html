@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Sprzedawcy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .dashboard-section { display: none; }
+        .dashboard-section.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-cash-register"></i>
+                <span>Panel Sprzedawcy</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#zamowienia" class="nav-link active"><i class="fa-solid fa-list-check"></i> Zamówienia</a>
+                <a href="#produkty" class="nav-link"><i class="fa-solid fa-tags"></i> Produkty (Ceny)</a>
+
+                <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Sklep</a>
+                <div class="divider"></div>
+                <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="dashboard-topbar">
+                <h1>Obsługa Sklepu</h1>
+                <div class="user-info">
+                    Zalogowany: <strong>{{ user.imie }} {{ user.nazwisko }}</strong> (Sprzedawca)
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="stat-info">
+                        <h3>Zamówienia</h3>
+                        <p>{{ orders|length }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <div class="stat-info">
+                        <h3>Produkty</h3>
+                        <p>{{ products|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="zamowienia" class="dashboard-section active">
+                <h2 class="section-title">Procesowanie Zamówień</h2>
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Nr Zamówienia</th>
+                                <th>Data</th>
+                                <th>Klient</th>
+                                <th>Kwota</th>
+                                <th>Status</th>
+                                <th>Akcja (Proces)</th> <th>Szczegóły</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ order.numer_zamowienia }}</strong></td>
+                                <td>{{ order.data_zlozenia.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ order.email_kontakt_do_zam }}</td>
+                                <td>{{ "%.2f"|format(order.suma_calkowita) }} zł</td>
+                                <td>
+                                     <span class="status-badge processing">{{ order.status_zamowienia }}</span>
+                                </td>
+                                <td>
+                                    <form action="/api/update-order-status" method="POST">
+                                        <input type="hidden" name="order_id" value="{{ order.id_zamowienia }}">
+
+                                        {% if order.status_zamowienia == 'Nowe' %}
+                                            <button name="new_status" value="Opłacone" class="btn-primary" style="background-color: #28a745; border: none; padding: 6px 12px; font-size: 12px;">
+                                                <i class="fa-solid fa-check"></i> Zaksięguj wpłatę
+                                            </button>
+
+                                        {% elif order.status_zamowienia == 'Opłacone' %}
+                                            <button name="new_status" value="W magazynie" class="btn-primary" style="background-color: #007bff; border: none; padding: 6px 12px; font-size: 12px;">
+                                                <i class="fa-solid fa-dolly"></i> Wyślij do magazynu
+                                            </button>
+
+                                        {% elif order.status_zamowienia == 'W magazynie' %}
+                                            <span style="color: #e67e22; font-size: 12px;"><i class="fa-solid fa-box-open"></i> W trakcie pakowania...</span>
+
+                                        {% elif order.status_zamowienia == 'Wysłane' %}
+                                            <span style="color: #28a745; font-size: 12px;"><i class="fa-solid fa-check-double"></i> Zakończone</span>
+
+                                        {% else %}
+                                            <span style="color: #999; font-size: 12px;">{{ order.status_zamowienia }}</span>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                                <td>
+                                    <a href="/zamowienie/{{ order.id_zamowienia }}" class="action-btn" title="Szczegóły">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="produkty" class="dashboard-section">
+                <h2 class="section-title">Zarządzanie Cenami</h2>
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Produkt</th>
+                                <th>Aktualna Cena</th>
+                                <th>Zmień cenę</th>
+                                <th>Zatwierdź</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in products %}
+                            <tr>
+                                <td>#{{ prod.id_modelu }}</td>
+                                <td>{{ prod.nazwa_modelu }}</td>
+                                <td style="font-weight: bold; color: #007bff;">{{ prod.cena_katalogowa }} zł</td>
+                                <td>
+                                    <form action="/api/update-price" method="POST" id="price-form-{{ prod.id_modelu }}" style="display: flex; gap: 5px;">
+                                        <input type="hidden" name="product_id" value="{{ prod.id_modelu }}">
+                                        <input type="number" name="new_price" step="0.01" value="{{ prod.cena_katalogowa }}" style="width: 100px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                    </form>
+                                </td>
+                                <td>
+                                    <button type="submit" form="price-form-{{ prod.id_modelu }}" class="action-btn" title="Zapisz cenę" style="color: green;">
+                                        <i class="fa-solid fa-check"></i> Zapisz
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const links = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.dashboard-section');
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                links.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                const targetId = link.getAttribute('href').substring(1);
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

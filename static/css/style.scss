@@ -194,7 +194,7 @@ header {
   }
 }
 // =========================================
-// 3. LAYOUT SKLEPU (SIDEBAR + GRID)
+// 4. LAYOUT SKLEPU (SIDEBAR + GRID)
 // =========================================
 .layout-container {
   display: flex;
@@ -438,7 +438,7 @@ main {
 }
 
 // =========================================
-// 4. PANEL ADMINISTRATORA (BEZ ZMIAN)
+// 5. PANEL ADMINISTRATORA (BEZ ZMIAN)
 // =========================================
 .dashboard-container {
   display: flex;
@@ -525,7 +525,7 @@ main {
 }
 
 // =========================================
-// 5. POZOSTAŁE KOMPONENTY (MODAL, FORMULARZE)
+// 6. POZOSTAŁE KOMPONENTY (MODAL, FORMULARZE)
 // =========================================
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -577,7 +577,7 @@ footer {
 }
 
 // =========================================
-// 4. STRONY SKLEPU (PRODUKTY, KOSZYK)
+// 7. STRONY SKLEPU (PRODUKTY, KOSZYK)
 // =========================================
 .categories {
   flex: 0 0 280px;
@@ -736,7 +736,7 @@ main {
   to { transform: translateX(0); opacity: 1; }
 }
 // =========================================
-// 5. SZCZEGÓŁY PRODUKTU (DOKLEJ TO NA KOŃCU)
+// 8. SZCZEGÓŁY PRODUKTU (DOKLEJ TO NA KOŃCU)
 // =========================================
 
 .product-detail {
@@ -1146,7 +1146,7 @@ main {
   }
 }
 // =========================================
-// 5. PANEL ADMINISTRATORA
+// 10. PANEL ADMINISTRATORA
 // =========================================
 .dashboard-container {
   display: flex;
@@ -1350,7 +1350,7 @@ main {
 }
 
 // =========================================
-// 6. RWD (RESPONSYWNOŚĆ)
+// 11. RWD (RESPONSYWNOŚĆ)
 // =========================================
 @media (max-width: 768px) {
   header { flex-wrap: wrap; }
@@ -1362,7 +1362,7 @@ main {
   .sidebar { transform: translateX(-100%); transition: 0.3s; } // Ukryj sidebar
 }
 // =========================================
-// 10. PASEK COOKIES 
+// 12. PASEK COOKIES 
 // =========================================
 
 .cookie-banner {
@@ -1437,6 +1437,59 @@ main {
     
     button {
       width: 100%;
+    }
+  }
+}
+// =========================================
+// 13. POPRAWKI LOGOWANIA I REJESTRACJI
+// =========================================
+
+// 1. Strzałka obok tytułu (wyrównanie w jednej linii)
+.header-positioning {
+  display: flex;          
+  align-items: center;    
+  gap: 15px;             // Odstęp między strzałką a napisem
+  margin-bottom: 25px;
+
+  // Styl strzałki powrotu
+  a {
+    color: #333;
+    font-size: 1.5rem;    
+    display: flex;
+    transition: color 0.2s;
+    text-decoration: none; // Usuwa podkreślenie
+    
+    &:hover {
+      color: $primary-color; // Niebieski po najechaniu
+    }
+  }
+
+  h1 {
+    margin: 0;            
+    line-height: 1;       
+    font-size: 2rem;      
+  }
+
+  .spacer { display: none; } 
+}
+
+// 2. Link na dole ("Nie masz konta? Zarejestruj się")
+.login-footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #666;
+
+  a {
+    color: $primary-color; // Twój główny niebieski (#007bff)
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 5px;      
+    transition: all 0.2s;
+
+    &:hover {
+      color: $primary-hover; 
+      text-decoration: underline;
     }
   }
 }

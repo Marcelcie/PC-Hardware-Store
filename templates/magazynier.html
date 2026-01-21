@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Magazyniera</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .dashboard-section { display: none; }
+        .dashboard-section.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-dolly"></i>
+                <span>Magazyn</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#wysylka" class="nav-link active"><i class="fa-solid fa-truck-ramp-box"></i> Wysyłka</a>
+                <a href="#stany" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i> Stany magazynowe</a>
+
+                <a href="/" style="margin-top: 20px;"><i class="fa-solid fa-arrow-left"></i> Sklep</a>
+                <div class="divider"></div>
+                <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="dashboard-topbar">
+                <h1>Centrum Logistyczne</h1>
+                <div class="user-info">
+                    Zalogowany: <strong>{{ user.imie }} {{ user.nazwisko }}</strong> (Magazynier)
+                </div>
+            </header>
+
+             <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon warning"><i class="fa-solid fa-clipboard-list"></i></div>
+                    <div class="stat-info">
+                        <h3>Do wysłania</h3>
+                        {% set ready_orders = orders | selectattr("status_zamowienia", "equalto", "W magazynie") | list %}
+                        <p>{{ ready_orders|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wysylka" class="dashboard-section active">
+                <h2 class="section-title">Zamówienia do realizacji</h2>
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Nr Zamówienia</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Akcja (Proces)</th>
+                                <th>Szczegóły</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ order.numer_zamowienia }}</strong></td>
+                                <td>{{ order.data_zlozenia.strftime('%Y-%m-%d') }}</td>
+                                <td><span class="status-badge processing">{{ order.status_zamowienia }}</span></td>
+                                <td>
+                                    <form action="/api/update-order-status" method="POST">
+                                        <input type="hidden" name="order_id" value="{{ order.id_zamowienia }}">
+
+                                        {% if order.status_zamowienia == 'Opłacone' %}
+                                            <button name="new_status" value="W magazynie" class="btn-primary" style="background-color: #ffc107; color: #000; border: none; padding: 6px 12px; font-size: 12px;">
+                                                <i class="fa-solid fa-box"></i> Przyjmij do pakowania
+                                            </button>
+                                        {% elif order.status_zamowienia == 'W magazynie' %}
+                                            <button name="new_status" value="Wysłane" class="btn-primary" style="padding: 6px 12px; font-size: 12px;">
+                                                <i class="fa-solid fa-truck"></i> Wyślij towar
+                                            </button>
+                                        {% else %}
+                                            <span style="color: #999; font-size: 12px;">Brak akcji</span>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                                <td>
+                                    <a href="/zamowienie/{{ order.id_zamowienia }}" style="color: #007bff; text-decoration: underline;">Co spakować?</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="stany" class="dashboard-section">
+                <h2 class="section-title">Inwentaryzacja</h2>
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Produkt</th>
+                                <th>Obecny Stan</th>
+                                <th>Nowy Stan</th>
+                                <th>Zatwierdź</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in products %}
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 600;">{{ prod.nazwa_modelu }}</div>
+                                    <small style="color: #888;">ID: {{ prod.id_modelu }}</small>
+                                </td>
+                                <td>
+                                    {% if prod.stan_magazynowy < 5 %}
+                                        <span style="color: red; font-weight: bold;">{{ prod.stan_magazynowy }} szt. (Niski!)</span>
+                                    {% else %}
+                                        <span style="color: green;">{{ prod.stan_magazynowy }} szt.</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="/api/update-stock" method="POST" id="stock-form-{{ prod.id_modelu }}">
+                                        <input type="hidden" name="product_id" value="{{ prod.id_modelu }}">
+                                        <input type="number" name="new_stock" value="{{ prod.stan_magazynowy }}" style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                    </form>
+                                </td>
+                                <td>
+                                    <button type="submit" form="stock-form-{{ prod.id_modelu }}" class="action-btn" style="color: green;">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const links = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.dashboard-section');
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                links.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                const targetId = link.getAttribute('href').substring(1);
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

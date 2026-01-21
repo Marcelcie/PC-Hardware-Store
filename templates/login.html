@@ -16,14 +16,15 @@
                     <h1>Zaloguj się</h1>
                     <div class="spacer"></div>
                 </div>
-                
+
                 {% if error %}
                 <div style="color: red; text-align: center; margin-bottom: 10px;">{{ error }}</div>
                 {% endif %}
                 <form action="/login" method="POST">
                     <div class="form-group">
-                        <label for="email">Adres E-mail</label> <div class="input-wrapper">
-                            <input type="email" id="email" name="email" autocomplete="email" required>
+                        <label for="identyfikator">Email lub Login</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="identyfikator" name="identyfikator" required placeholder="jan@example.com lub admin">
                         </div>
                     </div>
 
@@ -37,7 +38,6 @@
 
                     <button type="submit" class="login-btn">Zaloguj się</button>
                 </form>
-                
                 <div class="login-footer">
                     <p>Nie masz konta? <a href="rejestracja.html">Zarejestruj się</a></p>
                 </div>

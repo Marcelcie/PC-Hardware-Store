@@ -1525,4 +1525,46 @@ main .product-grid {
   .cookie-banner button {
     width: 100%;
   }
+}
+.header-positioning {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+.header-positioning a {
+  color: #333;
+  font-size: 1.5rem;
+  display: flex;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+.header-positioning a:hover {
+  color: #007bff;
+}
+.header-positioning h1 {
+  margin: 0;
+  line-height: 1;
+  font-size: 2rem;
+}
+.header-positioning .spacer {
+  display: none;
+}
+
+.login-footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #666;
+}
+.login-footer a {
+  color: #007bff;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 5px;
+  transition: all 0.2s;
+}
+.login-footer a:hover {
+  color: #0056b3;
+  text-decoration: underline;
 }/*# sourceMappingURL=style.css.map */
