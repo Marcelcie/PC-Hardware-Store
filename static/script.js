@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const togglePassword = document.querySelector('#togglePassword');
     const passwordInput = document.querySelector('#password');
     const openProductModalBtn = document.getElementById('open-product-modal');
+    const cookieBanner = document.getElementById('cookie-banner');
+    const acceptBtn = document.getElementById('accept-cookies-btn');
 
     // --- 1. ZARZĄDZANIE KOSZYKIEM (LOCAL STORAGE) ---
     
@@ -377,13 +379,9 @@ window.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.classList.remove('active');
     }
+});
 
-// --- OBSŁUGA COOKIES ---
-    const cookieBanner = document.getElementById('cookie-banner');
-    const acceptBtn = document.getElementById('accept-cookies-btn');
-
-    // 1. Sprawdź czy użytkownik już zaakceptował
-    if (!localStorage.getItem('cookiesAccepted')) {
+if (!localStorage.getItem('cookiesAccepted')) {
         setTimeout(() => {
             if(cookieBanner) cookieBanner.style.display = 'flex';
         }, 500);
@@ -396,16 +394,20 @@ window.addEventListener('click', (e) => {
             if(cookieBanner) cookieBanner.style.display = 'none';
         });
     }
-});
-});
 
-
-function openEditModal(id) {
-    const modal = document.getElementById('product-modal');
-    if (modal) {
-        modal.classList.add('active');
+    // --- OBSŁUGA PRZYCISKU "DODAJ NOWY PRODUKT" ---
+    if (openProductModalBtn) {
+        openProductModalBtn.addEventListener('click', () => {
+            const form = document.getElementById('product-form');
+            if (form) { 
+                form.reset();
+                form.action = "/admin/add-product";
+            }
+            const modalTitle = document.querySelector('#product-modal h2');
+            if (modalTitle) modalTitle.innerText = "Dodaj Nowy Produkt";
+        });
     }
-}
+});
 
 function confirmDelete(id) {
     if (confirm(`Czy na pewno chcesz usunąć produkt o ID: ${id}?`)) {
@@ -452,16 +454,4 @@ function openEditModal(btn) {
     modal.querySelector('button[type="submit"]').innerHTML = '<i class="fa-solid fa-save"></i> Zapisz zmiany';
 
     modal.classList.add('active');
-}
-
-if (openProductModalBtn) {
-    openProductModalBtn.addEventListener('click', () => {
-        const form = document.getElementById('product-form');
-        if (form) { // Dla pewności sprawdzamy też formularz
-            form.reset();
-            form.action = "/admin/add-product";
-        }
-        const modalTitle = document.querySelector('#product-modal h2');
-        if (modalTitle) modalTitle.innerText = "Dodaj Nowy Produkt";
-    });
 }
