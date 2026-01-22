@@ -123,19 +123,34 @@
 
         </div>
     </div>
+<div id="backend-data" 
+        {% if adres %}
+            data-has-address="true"
+            data-ulica="{{ adres.ulica }}"
+            data-nr-domu="{{ adres.nr_domu }}"
+            data-nr-lokalu="{{ adres.nr_lokalu or '' }}"
+            data-kod="{{ adres.kod_pocztowy }}"
+            data-miasto="{{ adres.miejscowosc }}"
+        {% else %}
+            data-has-address="false"
+        {% endif %}
+        style="display: none;">
+    </div>
 
     <script>
-        // 1. Zmienne globalne z Jinja2
+        // 1. Pobieranie zmiennych z ukrytego elementu HTML
         let defaultAddressData = null;
-        {% if adres %}
-        defaultAddressData = {
-            ulica: "{{ adres.ulica }}",
-            nr_domu: "{{ adres.nr_domu }}",
-            nr_lokalu: "{{ adres.nr_lokalu or '' }}",
-            kod: "{{ adres.kod_pocztowy }}",
-            miasto: "{{ adres.miejscowosc }}"
-        };
-        {% endif %}
+        const dataElement = document.getElementById('backend-data');
+
+        if (dataElement && dataElement.dataset.hasAddress === "true") {
+            defaultAddressData = {
+                ulica: dataElement.dataset.ulica,
+                nr_domu: dataElement.dataset.nrDomu,
+                nr_lokalu: dataElement.dataset.nrLokalu,
+                kod: dataElement.dataset.kod,
+                miasto: dataElement.dataset.miasto
+            };
+        }
 
         // 2. Funkcja przygotowująca koszyk do wysyłki (JSON -> Input)
         function prepareCart(form) {
@@ -148,18 +163,27 @@
 
         // 3. Obsługa widoków adresu
         function showNewAddressForm() {
-            document.getElementById('default-address-section').style.display = 'none';
+            const defaultSection = document.getElementById('default-address-section');
+            if(defaultSection) defaultSection.style.display = 'none';
+            
             document.getElementById('checkout-form-container').style.display = 'block';
-            document.getElementById('order-form').reset();
+            
+            // Czyścimy formularz tylko jeśli to nie jest edycja
+            const form = document.getElementById('order-form');
+            if(form) form.reset();
         }
 
         function cancelNewAddress() {
-            document.getElementById('default-address-section').style.display = 'block';
+            const defaultSection = document.getElementById('default-address-section');
+            if(defaultSection) defaultSection.style.display = 'block';
+            
             document.getElementById('checkout-form-container').style.display = 'none';
         }
 
         function editDefaultAddress() {
-            document.getElementById('default-address-section').style.display = 'none';
+            const defaultSection = document.getElementById('default-address-section');
+            if(defaultSection) defaultSection.style.display = 'none';
+            
             document.getElementById('checkout-form-container').style.display = 'block';
 
             if (defaultAddressData) {
@@ -174,7 +198,10 @@
         // 4. Ładowanie podsumowania koszyka
         document.addEventListener('DOMContentLoaded', async () => {
             const cartJson = localStorage.getItem('myShopCart');
+            
+            // Jeśli koszyk pusty -> wracamy do sklepu
             if (!cartJson || JSON.parse(cartJson).length === 0) {
+                // Małe zabezpieczenie, żeby nie przekierowało admina, jeśli po prostu testuje widok
                 alert("Twój koszyk jest pusty!");
                 window.location.href = "/koszyk.html";
                 return;
@@ -194,37 +221,40 @@
                 if (response.ok) {
                     const products = await response.json();
                     const container = document.getElementById('mini-cart-items');
-                    container.innerHTML = '';
-                    let total = 0;
+                    if(container) {
+                        container.innerHTML = '';
+                        let total = 0;
 
-                    cart.forEach(cartItem => {
-                        const product = products.find(p => p.id === cartItem.id);
-                        if (!product) return;
+                        cart.forEach(cartItem => {
+                            const product = products.find(p => p.id === cartItem.id);
+                            if (!product) return;
 
-                        const subtotal = product.price * cartItem.qty;
-                        total += subtotal;
+                            const subtotal = product.price * cartItem.qty;
+                            total += subtotal;
 
-                        const html = `
-                            <div class="mini-cart-item" style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
-                                <img src="${product.image || 'https://placehold.co/50'}" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;">
-                                <div class="mini-cart-info" style="flex:1;">
-                                    <div style="font-weight:600; font-size:0.9em;">${product.name}</div>
-                                    <div style="color:#666; font-size:0.8em;">
-                                        ${cartItem.qty} szt. x ${product.price} zł
+                            const html = `
+                                <div class="mini-cart-item" style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
+                                    <img src="${product.image || 'https://placehold.co/50'}" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;">
+                                    <div class="mini-cart-info" style="flex:1;">
+                                        <div style="font-weight:600; font-size:0.9em;">${product.name}</div>
+                                        <div style="color:#666; font-size:0.8em;">
+                                            ${cartItem.qty} szt. x ${product.price} zł
+                                        </div>
+                                    </div>
+                                    <div style="font-weight:bold;">
+                                        ${subtotal.toFixed(2)} zł
                                     </div>
                                 </div>
-                                <div style="font-weight:bold;">
-                                    ${subtotal.toFixed(2)} zł
-                                </div>
-                            </div>
-                        `;
-                        container.insertAdjacentHTML('beforeend', html);
-                    });
+                            `;
+                            container.insertAdjacentHTML('beforeend', html);
+                        });
 
-                    document.getElementById('mini-cart-total-price').innerText = total.toFixed(2) + " zł";
+                        const totalEl = document.getElementById('mini-cart-total-price');
+                        if(totalEl) totalEl.innerText = total.toFixed(2) + " zł";
+                    }
                 }
             } catch (error) {
-                console.error(error);
+                console.error("Błąd ładowania podsumowania:", error);
             }
         });
     </script>

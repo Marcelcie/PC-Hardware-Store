@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.querySelector('.close-modal');
     const togglePassword = document.querySelector('#togglePassword');
     const passwordInput = document.querySelector('#password');
+    const openProductModalBtn = document.getElementById('open-product-modal');
 
     // --- 1. ZARZĄDZANIE KOSZYKIEM (LOCAL STORAGE) ---
     
@@ -453,10 +454,14 @@ function openEditModal(btn) {
     modal.classList.add('active');
 }
 
-// Musisz też dodać obsługę przycisku "Dodaj nowy produkt", żeby czyścił formularz
-document.getElementById('open-product-modal').addEventListener('click', () => {
-    const form = document.getElementById('product-form');
-    form.reset();
-    form.action = "/admin/add-product";
-    document.querySelector('#product-modal h2').innerText = "Dodaj Nowy Produkt";
-});
+if (openProductModalBtn) {
+    openProductModalBtn.addEventListener('click', () => {
+        const form = document.getElementById('product-form');
+        if (form) { // Dla pewności sprawdzamy też formularz
+            form.reset();
+            form.action = "/admin/add-product";
+        }
+        const modalTitle = document.querySelector('#product-modal h2');
+        if (modalTitle) modalTitle.innerText = "Dodaj Nowy Produkt";
+    });
+}
