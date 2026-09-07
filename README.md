@@ -35,3 +35,25 @@ To run this project locally, follow these steps:
    ```bash
    git clone [https://github.com/Marcelcie/pc-hardware-store.git](https://github.com/Marcelcie/pc-hardware-store.git)
    cd pc-hardware-store
+2. **Create and activate a virtual environment:**
+
+Bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/Mac:
+source venv/bin/activate
+Install dependencies:
+
+Bash
+pip install -r requirements.txt
+3. **Set up the environment variables: **
+Create a .env file in the root directory and add your PostgreSQL database connection string:
+
+Fragment kodu
+DATABASE_URL=postgresql://user:password@localhost/dbname
+Run the application:
+
+Bash
+uvicorn main:app --reload
+The API will be available at http://localhost:8000.
